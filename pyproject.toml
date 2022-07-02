@@ -17,6 +17,7 @@ classifiers = [
     "License :: OSI Approved :: GPL v3 License",
     "Operating System :: OS Independent",
 ]
+dependencies = ["appdirs>=1.4.4"]
 
 [project.urls]
 "Homepage" = "https://github.com/mtijas/mqtt-fancontroller"
