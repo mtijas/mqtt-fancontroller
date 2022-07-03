@@ -14,8 +14,9 @@ class Config:
     def __exit__(self, type, value, traceback):
         pass
 
-    def __init__(self, app_name: str, config_file: str = None):
+    def __init__(self, app_name: str, logger, config_file: str = None):
         self.app_name = app_name
+        self.logger = logger
         self.parser = configparser.ConfigParser()
         self._possible_files = [
             f"~/.config/{self.app_name}/config.ini",
@@ -50,6 +51,3 @@ class Config:
             except:
                 continue
         return None
-
-    def get_parser(self):
-        return self.parser
