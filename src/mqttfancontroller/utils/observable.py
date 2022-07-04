@@ -7,9 +7,6 @@ from abc import ABC, abstractmethod
 class Observer(ABC):
     """Observer for any Observable"""
 
-    def __init__(self, observable):
-        self.observable = observable
-
     @abstractmethod
     def notify(self, event: str, data):
         """Notify callback for Observable to call on every new notification.
@@ -30,17 +27,18 @@ class Observable:
     Public methods:
     register_observer -- Register a new Observer
     deregister_observer -- Remove existing Observer registration
-    notiry_observers -- Notify all Observers registered to particular event.
+    notify_observers -- Notify all Observers registered to particular event.
     """
 
     def __init__(self):
-        self.observers = dict()
+        self.observers = {"*": []} # Wildcard should always exist
 
     def register_observer(self, event: str, observer: Observer):
         """Register a new observer to a specific event.
 
         Arguments:
         event -- A string name of an event (just make something up basically)
+            "*" acts as a wildcard: all events will get passed to the observer
         observer -- An Observer object
         """
         if event not in self.observers:
@@ -77,7 +75,11 @@ class Observable:
         data -- Any data (a dictionary perhaps?) to be passed to every
             Observer.
         """
-        if event not in self.observers:
+        # Pass all events to observers in the star dictionary (wildcard)
+        for observer in self.observers["*"]:
+            observer.notify(event, data)
+
+        if event not in self.observers or event == "*":
             return
 
         for observer in self.observers[event]:

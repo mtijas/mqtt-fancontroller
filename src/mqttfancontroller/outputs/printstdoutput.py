@@ -1,17 +1,17 @@
 # SPDX-FileCopyrightText: 2022 Markus Ijäs
 # SPDX-License-Identifier: GPL-3.0-only
 
-from mqttfancontroller.outputs.base import BaseOutputABC
+from mqttfancontroller.utils.baseprocess import BaseProcessABC
+from mqttfancontroller.utils.component import BaseComponentABC
 import time
 
 
-class PrintStdOutput(BaseOutputABC):
-    _event_name: str = "printstreamoutput"
+class PrintStdOutput(BaseProcessABC, BaseComponentABC):
     _messages: list = list()
 
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.events.register_observer("timestampinput", self)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.events.register_observer("*", self)
 
     def update(self):
         if self._messages:

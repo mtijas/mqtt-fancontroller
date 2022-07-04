@@ -18,7 +18,6 @@ class Engine:
         self.broker = MessageBroker(self.stop_event)
         self.needed_procs = [self.broker]
         self.running_procs = []
-        self.publish_queue = self.broker.get_publish_queue()
         self.init_needed_procs_from_config()
         self.logger.debug("Engine initialized")
 
@@ -58,19 +57,29 @@ class Engine:
 
     def init_needed_procs_from_config(self):
         """Initialize needed processes from config"""
+        (pub_q, sub_q) = self.broker.get_client_queues()
         self.needed_procs.append(
             TimestampInput(
-                "UnixTimestampOne",
-                self.stop_event,
-                self.publish_queue,
-                self.broker.get_new_subscriber_queue(),
+                config={"name": "UnixTimestampOne", "update_interval": 2},
+                stop_event=self.stop_event,
+                pub_queue=pub_q,
+                sub_queue=sub_q,
             )
         )
+        (pub_q, sub_q) = self.broker.get_client_queues()
         self.needed_procs.append(
             PrintStdOutput(
-                "PrintStdOne",
-                self.stop_event,
-                self.publish_queue,
-                self.broker.get_new_subscriber_queue(),
+                config={"name": "PrintStdOne"},
+                stop_event=self.stop_event,
+                pub_queue=pub_q,
+                sub_queue=sub_q,
             )
         )
+        (pub_q, sub_q) = self.broker.get_client_queues()
+        ts2 = TimestampInput(
+            config={"name": "UnixTimestampTwo", "update_interval": 5},
+            stop_event=self.stop_event,
+            pub_queue=pub_q,
+            sub_queue=sub_q,
+        )
+        self.needed_procs.append(ts2)

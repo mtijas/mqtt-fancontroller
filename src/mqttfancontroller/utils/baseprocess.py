@@ -7,20 +7,19 @@ from abc import ABC, abstractmethod
 from multiprocessing import current_process
 from time import sleep
 
-from mqttfancontroller.utils.message import Message
-from mqttfancontroller.utils.messagebroker import Publisher, Subscriber
-from mqttfancontroller.utils.observable import Observable
+from mqttfancontroller.utils.messagebroker import MessagingClient
+from mqttfancontroller.utils.observable import Observable, Observer
 
 
-class BaseProcessABC(ABC, Publisher, Subscriber):
+class BaseProcessABC(ABC, MessagingClient):
     _SLEEP_DURATION: float = 0.1
 
-    def __init__(self, stop_event, pub_queue, sub_queue):
+    def __init__(self, config, stop_event, pub_queue, sub_queue, **kwargs):
         self.stop_event = stop_event
         self.logger = logging.getLogger("mqttfancontroller.utils.base.BaseProcessABC")
-        Publisher.__init__(self, pub_queue)
-        Subscriber.__init__(self, sub_queue)
+        MessagingClient.__init__(self, pub_queue, sub_queue)
         self.events = Observable()
+        self.config = config
 
     @abstractmethod
     def update():
@@ -53,18 +52,27 @@ class BaseProcessABC(ABC, Publisher, Subscriber):
         message = self.fetch_message()
         if message is not None:
             self.logger.debug(f"Fetched message: {message}")
-            self.events.notify_observers(message.event, message.data)
+            self.events.notify_observers(message.data["event"], message.data["data"])
 
-    def publish_event(self, event: str, data: dict):
-        """Publish an event through messagebroker as Message"""
+    def publish_global_event(self, event: str, data: dict):
+        """Pass an event through messagebroker, and to local observers"""
         self.logger.debug(f"Publishing event: {event} with {data}")
-        self.publish_message(Message(event, data))
+        message_data = {
+            "event": event,
+            "data": data,
+        }
+        self.publish_message(message_data)
+        self.events.notify_observers(event, data)
 
 
 class TimedBaseProcessABC(BaseProcessABC):
     _previous_monotonic: float = 0
     _time_elapsed: float = 0
     _update_interval: int = 0
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.set_update_interval(self.config["update_interval"])
 
     def set_update_interval(self, interval: int):
         if interval <= 0:
