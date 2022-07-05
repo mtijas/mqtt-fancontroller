@@ -1,0 +1,13 @@
+modules:
+  - type: timestamp
+    config:
+      name: TimeStampOne
+      update_interval: 1
+  - type: timestamp
+    config:
+      name: TimeStampTwo
+      update_interval: 5
+  - type: stdout
+    config:
+      name: StdOutPrinterOne
+

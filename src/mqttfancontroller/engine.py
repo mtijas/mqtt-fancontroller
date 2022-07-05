@@ -6,11 +6,16 @@ import multiprocessing as mp
 from time import sleep
 
 from mqttfancontroller.inputs.timeinput import TimestampInput
-from mqttfancontroller.utils.messagebroker import MessageBroker
 from mqttfancontroller.outputs.printstdoutput import PrintStdOutput
+from mqttfancontroller.utils.messagebroker import MessageBroker
 
 
 class Engine:
+    available_modules = {
+        "timestamp": TimestampInput,
+        "stdout": PrintStdOutput,
+    }
+
     def __init__(self, config, logger):
         self.config = config
         self.logger = logger
@@ -18,12 +23,12 @@ class Engine:
         self.broker = MessageBroker(self.stop_event)
         self.needed_procs = [self.broker]
         self.running_procs = []
-        self.init_needed_procs_from_config()
         self.logger.debug("Engine initialized")
 
     def start(self):
         """Start the engine"""
         self.logger.info("Starting engine...")
+        self.init_needed_procs_from_config()
         # Try to start all needed processes
         for target in self.needed_procs:
             process = mp.Process(target=target.start)
@@ -57,29 +62,20 @@ class Engine:
 
     def init_needed_procs_from_config(self):
         """Initialize needed processes from config"""
-        (pub_q, sub_q) = self.broker.get_client_queues()
-        self.needed_procs.append(
-            TimestampInput(
-                config={"name": "UnixTimestampOne", "update_interval": 2},
+        modules = self.config["modules"].get(list)
+
+        for module in modules:
+            module_type = module["type"]
+            if module_type not in self.available_modules:
+                raise AttributeError(f"Module '{module}' is not installed.")
+
+            (pub_q, sub_q) = self.broker.get_client_queues()
+            module_config = module["config"]
+
+            module_instance = self.available_modules[module_type](
+                config=module_config,
                 stop_event=self.stop_event,
                 pub_queue=pub_q,
                 sub_queue=sub_q,
             )
-        )
-        (pub_q, sub_q) = self.broker.get_client_queues()
-        self.needed_procs.append(
-            PrintStdOutput(
-                config={"name": "PrintStdOne"},
-                stop_event=self.stop_event,
-                pub_queue=pub_q,
-                sub_queue=sub_q,
-            )
-        )
-        (pub_q, sub_q) = self.broker.get_client_queues()
-        ts2 = TimestampInput(
-            config={"name": "UnixTimestampTwo", "update_interval": 5},
-            stop_event=self.stop_event,
-            pub_queue=pub_q,
-            sub_queue=sub_q,
-        )
-        self.needed_procs.append(ts2)
+            self.needed_procs.append(module_instance)

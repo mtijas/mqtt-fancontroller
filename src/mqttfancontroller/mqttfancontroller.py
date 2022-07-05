@@ -5,8 +5,8 @@
 
 import argparse
 import logging
+import confuse
 
-from mqttfancontroller.config import Config
 from mqttfancontroller.engine import Engine
 
 
@@ -19,9 +19,23 @@ def main():
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-    config = Config("mqttfancontroller", logger, args.config)
+    config = confuse.Configuration("mqttfancontroller", __name__)
+    if args.config is not None:
+        try:
+            config.set_file(args.config)
+        except confuse.exceptions.ConfigReadError as err:
+            logger.warning(f"Configuration error: {err}")
+
     engine = Engine(config, logger)
-    engine.start()
+
+    try:
+        engine.start()
+    except KeyboardInterrupt:
+        logger.debug("Got KeyboardInterrupt")
+    except confuse.exceptions.ConfigError as err:
+        logger.warning(f"Configuration error: {err}")
+    finally:
+        engine.stop()
 
 
 def setup_logging():
