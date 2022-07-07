@@ -17,7 +17,7 @@ classifiers = [
     "License :: OSI Approved :: GPL v3 License",
     "Operating System :: OS Independent",
 ]
-dependencies = ["confuse"]
+dependencies = ["confuse", "paho-mqtt"]
 
 [project.urls]
 "Homepage" = "https://github.com/mtijas/mqtt-fancontroller"
