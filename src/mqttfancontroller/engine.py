@@ -5,8 +5,8 @@
 import multiprocessing as mp
 from time import sleep
 
-from mqttfancontroller.inputs.timeinput import TimestampInput
-from mqttfancontroller.outputs.printstdoutput import PrintStdOutput
+from mqttfancontroller.modules.printstdoutput import PrintStdOutput
+from mqttfancontroller.modules.timeinput import TimestampInput
 from mqttfancontroller.utils.messagebroker import MessageBroker
 
 
