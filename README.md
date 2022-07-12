@@ -21,19 +21,26 @@ Build the container with: `docker-compose build --no-cache` and run with
 Docker and Docker Compose should obviously be installed, but those are
 basically the only requirements for developer machines.
 
-### Running MQTTFanController inside the container
+All development tasks should be run inside the container, unless otherwise
+stated.
+
+### Installing MQTTFanController in editable mode
+
+All development tasks require installing MQTTFanController, since this 
+also installs all dependencies from PyPI.
 
 During development it's quite useful to be able to run the app in
 editable mode. This allows you to modify the code without reinstalling
-the package every time there is a change to the source code.
+the package every time there is a change to the source code. This can be 
+achieved by running `pip install -e .`.
 
-1. Install the app with `pip install -e .`
-2. Run with: `mqttfancontroller`
+### Running MQTTFanController inside the container
+
+The app may be started simply by running `mqttfancontroller`.
 
 ### Running unit tests
 
-Unit tests can simply be run by running `python -m unittest` inside the
-container.
+Unit tests can be run by running `python -m unittest`.
 
 ### Viewing logs during development
 
