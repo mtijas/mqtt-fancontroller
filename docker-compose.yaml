@@ -13,3 +13,6 @@ services:
       context: .
     volumes:
       - .:/fancontroller:z
+    environment:
+      - MQTTFANCONTROLLER_ENV__MQTT__USERNAME
+      - MQTTFANCONTROLLER_ENV__MQTT__PASSWORD

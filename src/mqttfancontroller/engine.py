@@ -8,12 +8,14 @@ from time import sleep
 from mqttfancontroller.modules.printstdoutput import PrintStdOutput
 from mqttfancontroller.modules.timeinput import TimestampInput
 from mqttfancontroller.utils.messagebroker import MessageBroker
+from mqttfancontroller.modules.mqtt import MQTTMessenger
 
 
 class Engine:
     available_modules = {
         "timestamp": TimestampInput,
         "stdout": PrintStdOutput,
+        "mqtt": MQTTMessenger,
     }
 
     def __init__(self, config, logger):
@@ -66,11 +68,18 @@ class Engine:
 
         for module in modules:
             module_type = module["type"]
+            module_config = dict()
             if module_type not in self.available_modules:
                 raise AttributeError(f"Module '{module}' is not installed.")
 
             (pub_q, sub_q) = self.broker.get_client_queues()
-            module_config = module["config"]
+            if "config" in module:
+                module_config = module["config"]
+
+            if "env" in self.config:
+                if module_type in self.config["env"]:
+                    for k, v in self.config["env"][module_type].items():
+                        module_config[k] = str(v)
 
             module_instance = self.available_modules[module_type](
                 config=module_config,

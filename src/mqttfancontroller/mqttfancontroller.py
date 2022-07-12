@@ -25,6 +25,7 @@ def main():
             config.set_file(args.config)
         except confuse.exceptions.ConfigReadError as err:
             logger.warning(f"Configuration error: {err}")
+    config.set_env()
 
     engine = Engine(config, logger)
 

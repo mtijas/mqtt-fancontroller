@@ -1,0 +1,13 @@
+modules:
+  - type: stdout
+  - type: timestamp
+    config:
+      name: TimestampExample
+      update_interval: 4
+  - type: mqtt
+    config:
+      publish_events:
+        timestamp: mqttfancontroller/test/output
+      subscribe_topics:
+        - mqttfancontroller/test/input
+      host: mqtt.local.lan

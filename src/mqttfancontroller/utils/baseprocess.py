@@ -16,7 +16,7 @@ class BaseProcessABC(ABC, MessagingClient):
 
     def __init__(self, config, stop_event, pub_queue, sub_queue, **kwargs):
         self.stop_event = stop_event
-        self.logger = logging.getLogger("mqttfancontroller.utils.base.BaseProcessABC")
+        self.logger = logging.getLogger("utils.base.BaseProcessABC")
         MessagingClient.__init__(self, pub_queue, sub_queue)
         self.events = Observable()
         self.config = config
@@ -54,7 +54,7 @@ class BaseProcessABC(ABC, MessagingClient):
             self.logger.debug(f"Fetched message: {message}")
             self.events.notify_observers(message.data["event"], message.data["data"])
 
-    def publish_global_event(self, event: str, data: dict):
+    def publish_global_event(self, event: str, data):
         """Pass an event through messagebroker, and to local observers"""
         self.logger.debug(f"Publishing event: {event} with {data}")
         message_data = {
