@@ -130,3 +130,6 @@ dmypy.json
 
 # VSCode
 .vscode/
+
+# Bridge dev config
+bridge/config.yaml
