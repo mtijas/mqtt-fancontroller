@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2022 Markus Ijäs
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Environment variables (.env file in this directory):
+# ARDUINO_PORT: local USB port for Arduino board.
+# ARDUINO_BOARD: Arduino board name ("uno" for Uno).
+# ARDUINO_PLATFORM: Platform name for ARDUINO_BOARD ("arduino:avr" for Uno)
+#
+# Upload failing with permission denied in Linux?
+# Add yourself to the dialout group: `sudo usermod -aG dialout <username>`
+# Logout and login, and try again.
+
+version: "3.5"
+
+services:
+  uploader:
+    image: fc-arduino-dev
+    container_name: fc-arduino-dev
+    stdin_open: true
+    tty: true
+    build:
+      context: .
+    volumes:
+      - ./src:/arduino/src:z
+    devices:
+      - ${ARDUINO_PORT}:/dev/ttyACM0
+    environment:
+      - ARDUINO_PLATFORM
+      - ARDUINO_BOARD
+      - ARDUINO_PORT
