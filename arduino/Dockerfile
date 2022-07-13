@@ -6,8 +6,8 @@ FROM debian:bullseye-slim
 
     WORKDIR /arduino
 
-    RUN mkdir /root/.arduino15
-    COPY ./arduino-cli.yaml /root/.arduino15/arduino-cli.yaml
+    RUN mkdir /arduino/.arduino15
+    COPY ./arduino-cli.yaml /arduino/.arduino15/arduino-cli.yaml
 
     RUN apt update
     RUN apt install -y curl
