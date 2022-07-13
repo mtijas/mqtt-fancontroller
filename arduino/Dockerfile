@@ -19,4 +19,10 @@ FROM debian:bullseye-slim
 
     RUN arduino-cli core install $ARDUINO_PLATFORM
 
+    COPY ./install-requirements.sh .
+    COPY ./requirements.txt .
+    RUN chmod +x install-requirements.sh
+
+    RUN ./install-requirements.sh
+
     ENTRYPOINT ["./upload-sketch.sh"]
