@@ -6,13 +6,10 @@
 class Component : public Observer
 {
 protected:
-    Observable* events;
+    Observable *events;
 
 public:
-    Component(Observable* events)
-    {
-        this->events = events;
-    }
+    Component(Observable *events);
     virtual void setup() = 0;
     virtual void loop() = 0;
 };

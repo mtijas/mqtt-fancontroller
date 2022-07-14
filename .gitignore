@@ -133,3 +133,7 @@ dmypy.json
 
 # Bridge dev config
 bridge/config.yaml
+
+# 3rd party libraries
+controller/arduino/src/libs/*
+!controller/arduino/src/libs/README.md

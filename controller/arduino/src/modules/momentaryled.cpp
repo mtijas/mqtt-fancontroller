@@ -12,7 +12,7 @@ void MomentaryLed::loop()
     unsigned long current_millis = millis();
     this->on_counter += calculate_duration(last_millis, current_millis);
 
-    if (this->on_counter >= on_duration)
+    if (this->on_counter >= on_duration && digitalRead(led_pin))
     {
         digitalWrite(led_pin, LOW);
     }

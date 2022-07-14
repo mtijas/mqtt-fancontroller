@@ -1,4 +1,8 @@
 #include "component.hpp"
 
-void Component::setup() {};
-void Component::loop() {};
+Component::Component(Observable *events)
+{
+    this->events = events;
+}
+
+

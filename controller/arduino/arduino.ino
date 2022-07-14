@@ -6,43 +6,25 @@
 #include "src/utils/observable.hpp"
 #include "src/modules/led.hpp"
 #include "src/modules/momentaryled.hpp"
+#include "src/modules/epaper.hpp"
 
-int alm_counter = 0;
-bool alm_on = false;
 Observable events;
-Led alarm_led(&events, 4);
-MomentaryLed data_led(&events, 3, 100);
+MomentaryLed d1(&events, 4, 100);
+MomentaryLed d2(&events, 3, 100);
+Epaper ep_display(&events, 1000);
 
 void setup()
 {
-    alarm_led.setup("alarm");
-    data_led.setup("serial-data-received");
+    d1.setup("d1");
+    d2.setup("d2");
+    ep_display.setup();
 }
 
 void loop()
 {
-    if (alm_counter % 50 == 0)
-    {
-        events.notify_observers("serial-data-received", "on");
-    }
+    d1.loop();
+    d2.loop();
+    ep_display.loop();
 
-    alm_counter++;
-    if (alm_counter > 100)
-    {
-        if (!alm_on)
-        {
-            events.notify_observers("alarm", "on");
-        }
-        else
-        {
-            events.notify_observers("alarm", "off");
-        }
-        alm_on = !alm_on;
-        alm_counter = 0;
-    }
-
-    alarm_led.loop();
-    data_led.loop();
-
-    delay(10);
+    delay(100);
 }

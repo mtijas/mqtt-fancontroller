@@ -9,6 +9,7 @@ Led::Led(Observable *events, int pin)
 void Led::setup(String event_filter)
 {
     this->event_filter = event_filter;
+    pinMode(led_pin, OUTPUT);
     events->register_observer(this);
 }
 
