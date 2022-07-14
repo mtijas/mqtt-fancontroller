@@ -4,10 +4,10 @@
 FROM debian:bullseye-slim
     ENV ARDUINO_PLATFORM "arduino:avr"
 
-    WORKDIR /arduino
+    WORKDIR /controller
 
-    RUN mkdir /arduino/.arduino15
-    COPY ./arduino-cli.yaml /arduino/.arduino15/arduino-cli.yaml
+    RUN mkdir /controller/.arduino15
+    COPY ./arduino-cli.yaml /controller/.arduino15/arduino-cli.yaml
 
     RUN apt update
     RUN apt install -y curl

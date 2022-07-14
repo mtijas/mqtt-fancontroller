@@ -21,7 +21,7 @@ services:
     build:
       context: .
     volumes:
-      - ./src:/arduino/src:z
+      - ./arduino:/controller/arduino:z
     devices:
       - ${ARDUINO_PORT}:/dev/ttyACM0
     environment:
