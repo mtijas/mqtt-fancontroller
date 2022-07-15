@@ -29,6 +29,17 @@ public:
     void setup();
     void notify(String event, String data);
     void update();
+    void clearDisplay();
+    void paintString(
+        String data,
+        sFONT *font,
+        int x,
+        int y,
+        int width,
+        int height,
+        int color,
+        int background);
+    void positionPaintToDisplay(Paint *paint, int x, int y);
 };
 
 #endif
