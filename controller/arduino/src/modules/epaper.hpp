@@ -23,10 +23,9 @@ protected:
     bool display_ok;
 
 public:
-    unsigned char image[1024];
     Paint *paint;
     Epd *epd;
-    Epaper(Observable *events, int update_interval);
+    Epaper(Observable *events, int update_interval, Epd *epd, Paint *paint);
     void setup();
     void notify(String event, String data);
     void update();

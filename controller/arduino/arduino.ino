@@ -11,7 +11,11 @@
 Observable events;
 MomentaryLed d1(&events, 4, 100);
 MomentaryLed d2(&events, 3, 100);
-Epaper ep_display(&events, 1000);
+
+unsigned char image[1024];
+Paint paint(image, 0, 0);
+Epd epd;
+Epaper ep_display(&events, 10000, &epd, &paint);
 
 void setup()
 {

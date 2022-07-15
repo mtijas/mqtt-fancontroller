@@ -1,11 +1,11 @@
 #include "epaper.hpp"
 
-Epaper::Epaper(Observable *events, int update_interval)
+Epaper::Epaper(Observable *events, int update_interval, Epd *epd, Paint *paint)
     : TimedComponent(events, update_interval)
 {
     this->display_ok = false;
-    paint = &Paint(image, 0, 0);
-    epd = &Epd();
+    this->paint = paint;
+    this->epd = epd;
 }
 
 void Epaper::setup()
@@ -29,7 +29,7 @@ void Epaper::update()
     paint->SetWidth(200);
     paint->SetHeight(30);
 
-    //paint->Clear(UNCOLORED);
+    paint->Clear(UNCOLORED);
 
     char char_buf[10];
     String(millis() / 1000).toCharArray(char_buf, 10);
