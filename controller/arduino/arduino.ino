@@ -4,9 +4,9 @@
  */
 
 #include "src/utils/observable.hpp"
-#include "src/modules/led.hpp"
-#include "src/modules/momentaryled.hpp"
-#include "src/modules/epaper.hpp"
+#include "src/components/led.hpp"
+#include "src/components/momentaryled.hpp"
+#include "src/components/epaper.hpp"
 
 Observable events;
 MomentaryLed d1(&events, 4, 100);
