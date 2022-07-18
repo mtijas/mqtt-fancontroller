@@ -2,44 +2,47 @@
 #define EPAPER_H
 
 #include <Arduino.h>
-#include "../utils/timedcomponent.hpp"
 #include <SPI.h>
 #include "../libs/epd1in54_V2.h"
 #include "../libs/epdpaint.h"
-
-#define RST_PIN 8
-#define DC_PIN 9
-#define CS_PIN 10
-#define BUSY_PIN 7
 
 #define COLORED 0
 #define UNCOLORED 1
 
 using namespace std;
 
-class Epaper : public TimedComponent
+class Epaper
 {
 protected:
     bool display_ok;
-
-public:
+    sFONT *getFont(int font_size);
     Paint *paint;
     Epd *epd;
-    Epaper(Observable *events, int update_interval, Epd *epd, Paint *paint);
+    int width;
+    int height;
+
+public:
+    Epaper(Paint *paint, Epd *epd, int width, int height);
     void setup();
-    void notify(String event, String data);
-    void update();
+    int getWidth();
+    int getHeight();
     void clearDisplay();
-    void paintString(
+    void fullUpdate();
+    void partUpdate();
+    void printString(
         String data,
-        sFONT *font,
+        int font_size,
+        int x,
+        int y,
+        int width);
+    void printString(
+        String data,
+        int font_size,
         int x,
         int y,
         int width,
-        int height,
         int color,
         int background);
-    void positionPaintToDisplay(Paint *paint, int x, int y);
 };
 
 #endif
