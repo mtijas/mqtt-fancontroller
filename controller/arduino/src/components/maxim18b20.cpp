@@ -17,13 +17,10 @@ void Maxim18b20::update()
     int number = 1;
     String temp;
 
-    events->notify_observers("d1", "on");
-
     while (ds->selectNext())
     {
-        events->notify_observers("d2", "on");
         temp = ds->getTempC();
-        events->notify_observers("temp-" + String(number), temp);
+        events->notify_observers("ch" + String(number) + "-temp", temp);
         number++;
     }
 }

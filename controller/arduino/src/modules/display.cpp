@@ -42,13 +42,37 @@ void Display::update()
 
 void Display::notify(String event, String data)
 {
-    if (event.equals("temp-1"))
+    if (event.equals("ch1-temp"))
     {
         printLeftString(data, 20, 48, COLORED, UNCOLORED);
     }
-    else if (event.equals("temp-2"))
+    else if (event.equals("ch2-temp"))
     {
         printRightString(data, 20, 48, COLORED, UNCOLORED);
+    }
+    else if (event.equals("ch1-target"))
+    {
+        printLeftString(data, 20, 88, COLORED, UNCOLORED);
+    }
+    else if (event.equals("ch2-target"))
+    {
+        printRightString(data, 20, 88, COLORED, UNCOLORED);
+    }
+    else if (event.equals("ch1-speed"))
+    {
+        printLeftString(data, 20, 128, COLORED, UNCOLORED);
+    }
+    else if (event.equals("ch2-speed"))
+    {
+        printRightString(data, 20, 128, COLORED, UNCOLORED);
+    }
+    else if (event.equals("ch1-output"))
+    {
+        printLeftString(data, 20, 168, COLORED, UNCOLORED);
+    }
+    else if (event.equals("ch2-output"))
+    {
+        printRightString(data, 20, 168, COLORED, UNCOLORED);
     }
 }
 
@@ -65,7 +89,7 @@ void Display::printLeftString(String data, int font_size, int y, int color, int 
 
 void Display::printRightString(String data, int font_size, int y, int color, int background)
 {
-    int x = width / 2 + 2;
-    int total_width = width / 2 - 2;
+    int x = width / 2 + 4;
+    int total_width = width / 2 - 4;
     epaper->printString(data, font_size, x, y, total_width, color, background);
 }

@@ -6,11 +6,11 @@
 class TimedComponent : public Component
 {
 private:
-    unsigned long time_elapsed;
     unsigned long previous_millis;
 
 protected:
     int update_interval;
+    unsigned long time_elapsed;
     unsigned long calculate_elapsed(unsigned long start, unsigned long stop);
 
 public:
