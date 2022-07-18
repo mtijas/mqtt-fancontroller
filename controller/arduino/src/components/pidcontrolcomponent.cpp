@@ -45,7 +45,8 @@ void PIDControlComponent::update()
 {
     pid->run();
     if (invert) {
-        *output = 255 - *output;
+        events->notify_observers(channel + "-output", String(255 - *output));
+    } else {
+        events->notify_observers(channel + "-output", String(*output));
     }
-    events->notify_observers(channel + "-output", String(*output));
 }
