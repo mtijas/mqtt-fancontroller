@@ -6,4 +6,4 @@
  * @param event
  * @param data
  */
-void Observer::notify(String event, String data){};
+void Observer::notify(const String &event, const String &data){};

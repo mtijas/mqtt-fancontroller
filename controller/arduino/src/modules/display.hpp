@@ -11,19 +11,19 @@ protected:
     int width;
     int height;
     void printFullString(
-        String data,
+        const String &data,
         int font_size,
         int y,
         int color,
         int background);
     void printLeftString(
-        String data,
+        const String &data,
         int font_size,
         int y,
         int color,
         int background);
     void printRightString(
-        String data,
+        const String &data,
         int font_size,
         int y,
         int color,
@@ -32,7 +32,7 @@ protected:
 public:
     Display(Observable *events, Epaper *epaper, int update_interval);
     void setup();
-    void notify(String event, String data);
+    void notify(const String &event, const String &data);
     void update();
 };
 

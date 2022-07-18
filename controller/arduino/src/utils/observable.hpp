@@ -12,7 +12,7 @@ private:
 
 public:
     void register_observer(Observer* observer);
-    void notify_observers(String event, String data);
+    void notify_observers(const String &event, const String &data);
 };
 
 #endif

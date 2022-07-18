@@ -21,7 +21,7 @@ void Observable::register_observer(Observer* observer)
  *
  * @param data
  */
-void Observable::notify_observers(String event, String data)
+void Observable::notify_observers(const String &event, const String &data)
 {
     for (int i = 0; i < arr_length; i++)
     {

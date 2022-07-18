@@ -1,4 +1,3 @@
-#include "Arduino.h"
 #include "maxim18b20.hpp"
 
 Maxim18b20::Maxim18b20(Observable *events, DS18B20 *ds, int update_interval, int pin)
@@ -10,7 +9,7 @@ Maxim18b20::Maxim18b20(Observable *events, DS18B20 *ds, int update_interval, int
 
 void Maxim18b20::setup() {}
 
-void Maxim18b20::notify(String event, String data) {}
+void Maxim18b20::notify(const String &event, const String &data) {}
 
 void Maxim18b20::update()
 {

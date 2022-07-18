@@ -1,3 +1,4 @@
 AUnit
 OneWire
 DS18B20
+AutoPID

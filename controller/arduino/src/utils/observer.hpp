@@ -8,7 +8,7 @@ using namespace std;
 class Observer
 {
 public:
-    virtual void notify(String event, String data) = 0;
+    virtual void notify(const String &event, const String &data) = 0;
 };
 
 #endif

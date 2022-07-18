@@ -15,9 +15,9 @@ protected:
 public:
     Led(Observable *events, int led_pin);
     void setup();
-    void setup(String event_filter);
+    void setup(const String &event_filter);
     void loop();
-    void notify(String event, String data);
+    void notify(const String &event, const String &data);
 };
 
 #endif

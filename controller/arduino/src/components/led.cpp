@@ -6,7 +6,7 @@ Led::Led(Observable *events, int pin)
     led_pin = pin;
 }
 
-void Led::setup(String event_filter)
+void Led::setup(const String &event_filter)
 {
     this->event_filter = event_filter;
     pinMode(led_pin, OUTPUT);
@@ -23,7 +23,7 @@ void Led::loop() {}
  * @param event
  * @param data
  */
-void Led::notify(String event, String data)
+void Led::notify(const String &event, const String &data)
 {
     if (!event.equals(event_filter))
     {

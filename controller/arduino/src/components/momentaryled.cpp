@@ -29,7 +29,7 @@ unsigned long MomentaryLed::calculate_duration(unsigned long start, unsigned lon
     return stop - start;
 }
 
-void MomentaryLed::notify(String event, String data)
+void MomentaryLed::notify(const String &event, const String &data)
 {
     if (!event.equals(event_filter))
     {

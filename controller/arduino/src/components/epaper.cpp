@@ -38,7 +38,7 @@ void Epaper::partUpdate()
 }
 
 void Epaper::printString(
-    String data,
+    const String &data,
     int font_size,
     int x,
     int y,
@@ -48,7 +48,7 @@ void Epaper::printString(
 }
 
 void Epaper::printString(
-    String data,
+    const String &data,
     int font_size,
     int x,
     int y,
@@ -81,11 +81,11 @@ void Epaper::clearDisplay()
     }
 
     paint->SetWidth(200);
-    paint->SetHeight(40);
+    paint->SetHeight(20);
     paint->Clear(UNCOLORED);
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 16; i++)
     {
-        epd->SetFrameMemory(paint->GetImage(), 0, i * 40, paint->GetWidth(), paint->GetHeight());
+        epd->SetFrameMemory(paint->GetImage(), 0, i * 20, paint->GetWidth(), paint->GetHeight());
     }
     epd->DisplayFrame();
 }
@@ -108,10 +108,12 @@ sFONT *Epaper::getFont(int font_size)
     }
 }
 
-int Epaper::getWidth() {
+int Epaper::getWidth()
+{
     return width;
 }
 
-int Epaper::getHeight() {
+int Epaper::getHeight()
+{
     return height;
 }

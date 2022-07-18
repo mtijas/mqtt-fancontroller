@@ -19,7 +19,7 @@ protected:
 public:
     MomentaryLed(Observable *events, int led_pin, int on_duration);
     void loop();
-    void notify(String event, String data);
+    void notify(const String &event, const String &data);
 };
 
 #endif

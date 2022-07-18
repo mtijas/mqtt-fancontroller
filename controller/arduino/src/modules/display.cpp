@@ -40,7 +40,7 @@ void Display::update()
     epaper->fullUpdate();
 }
 
-void Display::notify(String event, String data)
+void Display::notify(const String &event, const String &data)
 {
     if (event.equals("ch1-temp"))
     {
@@ -68,26 +68,28 @@ void Display::notify(String event, String data)
     }
     else if (event.equals("ch1-output"))
     {
-        printLeftString(data, 20, 168, COLORED, UNCOLORED);
+        float percent = data.toFloat() / 255 * 100;
+        printLeftString(String(percent), 20, 168, COLORED, UNCOLORED);
     }
     else if (event.equals("ch2-output"))
     {
-        printRightString(data, 20, 168, COLORED, UNCOLORED);
+        float percent = data.toFloat() / 255 * 100;
+        printRightString(String(percent), 20, 168, COLORED, UNCOLORED);
     }
 }
 
-void Display::printFullString(String data, int font_size, int y, int color, int background)
+void Display::printFullString(const String &data, int font_size, int y, int color, int background)
 {
     epaper->printString(data, font_size, 0, y, width, color, background);
 }
 
-void Display::printLeftString(String data, int font_size, int y, int color, int background)
+void Display::printLeftString(const String &data, int font_size, int y, int color, int background)
 {
     int total_width = width / 2;
     epaper->printString(data, font_size, 0, y, total_width, color, background);
 }
 
-void Display::printRightString(String data, int font_size, int y, int color, int background)
+void Display::printRightString(const String &data, int font_size, int y, int color, int background)
 {
     int x = width / 2 + 4;
     int total_width = width / 2 - 4;

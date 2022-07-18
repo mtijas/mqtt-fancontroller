@@ -30,13 +30,13 @@ public:
     void fullUpdate();
     void partUpdate();
     void printString(
-        String data,
+        const String &data,
         int font_size,
         int x,
         int y,
         int width);
     void printString(
-        String data,
+        const String &data,
         int font_size,
         int x,
         int y,
