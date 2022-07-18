@@ -69,8 +69,8 @@ void setup()
 
     events.notify_observers("ch1-temp", "--.--");
     events.notify_observers("ch2-temp", "--.--");
-    events.notify_observers("ch1-target", "26.00");
-    events.notify_observers("ch2-target", "24.20");
+    events.notify_observers("ch1-target", "24.25");
+    events.notify_observers("ch2-target", "23.50");
     events.notify_observers("ch1-speed", "----");
     events.notify_observers("ch2-speed", "----");
     events.notify_observers("ch1-output", "255");
