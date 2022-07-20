@@ -2,7 +2,7 @@
 #define PIDCONTROLCOMPONENT_H
 
 #include "Arduino.h"
-#include <AutoPID.h>
+#include <PID_v1.h>
 #include "../utils/timedcomponent.hpp"
 
 using namespace std;
@@ -20,19 +20,17 @@ protected:
     double *setpoint;
     double *input;
     double *output;
-    AutoPID *pid;
-    bool invert;
+    PID *pid;
 
 public:
     PIDControlComponent(
         Observable *events,
-        AutoPID *pid,
+        PID *pid,
         int update_interval,
         const String &channel,
         double *input,
         double *output,
-        double *setpoint,
-        bool invert);
+        double *setpoint);
     void setup();
     void notify(const String &event, const String &data);
     void update();

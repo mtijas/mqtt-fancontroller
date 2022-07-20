@@ -2,13 +2,12 @@
 
 PIDControlComponent::PIDControlComponent(
     Observable *events,
-    AutoPID *pid,
+    PID *pid,
     int update_interval,
     const String &channel,
     double *input,
     double *output,
-    double *setpoint,
-    bool invert)
+    double *setpoint)
     : TimedComponent(events, update_interval)
 {
     this->pid = pid;
@@ -16,16 +15,16 @@ PIDControlComponent::PIDControlComponent(
     this->setpoint = setpoint;
     this->input = input;
     this->output = output;
-    this->invert = invert;
 }
 
 void PIDControlComponent::setup()
 {
-    Kp = 1.0;
-    Ki = 0.1;
-    Kd = 0.5;
-    pid->setOutputRange(0, 255);
-    pid->setGains(Kp, Ki, Kd);
+    Kp = pid->GetKp();
+    Ki = pid->GetKi();
+    Kd = pid->GetKd();
+    pid->SetOutputLimits(0, 255);
+    pid->SetMode(AUTOMATIC);
+
     events->register_observer(this);
 }
 
@@ -43,10 +42,6 @@ void PIDControlComponent::notify(const String &event, const String &data)
 
 void PIDControlComponent::update()
 {
-    pid->run();
-    if (invert) {
-        events->notify_observers(channel + "-output", String(255 - *output));
-    } else {
-        events->notify_observers(channel + "-output", String(*output));
-    }
+    pid->Compute();
+    events->notify_observers(channel + "-output", String(*output));
 }
