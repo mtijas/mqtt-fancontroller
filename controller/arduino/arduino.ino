@@ -8,6 +8,7 @@
 #include "src/components/maxim18b20.hpp"
 #include "src/components/pwmfan.hpp"
 #include "src/components/pidcontrolcomponent.hpp"
+#include "src/modules/serialcomms.hpp"
 
 #define RST_PIN 8
 #define DC_PIN 9
@@ -17,29 +18,29 @@
 
 Observable events;
 
+SerialComms serialcomms(&events, 1000, &Serial);
+
 double pid1_input, pid1_output, pid1_setpoint;
-AutoPID pid1(&pid1_input, &pid1_setpoint, &pid1_output, 0, 255, 1.0, 0.1, 0.5);
+PID pid1(&pid1_input, &pid1_output, &pid1_setpoint, 5.0, 0.2, 1.0, REVERSE);
 PIDControlComponent pc1(
     &events,
     &pid1,
-    2000,
+    1000,
     "ch1",
     &pid1_input,
     &pid1_output,
-    &pid1_setpoint,
-    true);
+    &pid1_setpoint);
 
 double pid2_input, pid2_output, pid2_setpoint;
-AutoPID pid2(&pid2_input, &pid2_setpoint, &pid2_output, 0, 255, 1.0, 0.1, 0.5);
+PID pid2(&pid2_input, &pid2_output, &pid2_setpoint, 5.0, 0.2, 1.0, REVERSE);
 PIDControlComponent pc2(
     &events,
     &pid2,
-    2000,
+    1000,
     "ch2",
     &pid2_input,
     &pid2_output,
-    &pid2_setpoint,
-    true);
+    &pid2_setpoint);
 
 PWMFan fan1(&events, 3000, 3, 5, "ch1");
 PWMFan fan2(&events, 3000, 4, 6, "ch2");
@@ -67,10 +68,12 @@ void setup()
     pc1.setup();
     pc2.setup();
 
+    serialcomms.setup(9600);
+
     events.notify_observers("ch1-temp", "--.--");
     events.notify_observers("ch2-temp", "--.--");
-    events.notify_observers("ch1-target", "24.25");
-    events.notify_observers("ch2-target", "23.50");
+    events.notify_observers("ch1-target", "30.00");
+    events.notify_observers("ch2-target", "30.00");
     events.notify_observers("ch1-speed", "----");
     events.notify_observers("ch2-speed", "----");
     events.notify_observers("ch1-output", "255");
@@ -84,6 +87,7 @@ void loop()
     maxim.loop();
     pc1.loop();
     pc2.loop();
+    serialcomms.loop();
     display.loop();
 
     delay(10);

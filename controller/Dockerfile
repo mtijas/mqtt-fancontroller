@@ -10,7 +10,8 @@ FROM debian:bullseye-slim
     COPY ./arduino-cli.yaml /controller/.arduino15/arduino-cli.yaml
 
     RUN apt update
-    RUN apt install -y curl
+    RUN apt install -y curl python3 python3-pip
+    RUN pip install pyserial
 
     RUN curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/local/bin sh
 

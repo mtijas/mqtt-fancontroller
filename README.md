@@ -70,3 +70,6 @@ and uploading the sketch, you may run `docker-compose run --entrypoint="bash"
 uploader`. Then inside the container you may compile the sketch without
 uploading it by running `arduino-cli compile --fqbn
 ${ARDUINO_PLATFORM}:${ARDUINO_BOARD} /controller/arduino`.
+
+Inside the container you may also use `?` to communicate with Arduino's
+serial interface. Just start minicom with `?`.
