@@ -106,7 +106,7 @@ void SerialComms::readTarget(const uint8_t channel)
     uint16_t data = readUInt16();
     sPort->write(RCVD);
 
-    double target = data / 100.0;
+    double target = data / 10.0;
 
     char message[16];
     dtostrf(target, 1, 1, message);

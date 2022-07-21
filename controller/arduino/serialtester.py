@@ -12,6 +12,8 @@ The target should now be changed.
 """
 
 import serial
+import curses
+import time
 
 response_names = {
     1: "HELLO",
@@ -29,37 +31,124 @@ response_names = {
     71: "GET_SETTINGS",
 }
 
+text_buffer = list()
+input_line_position = 0
+ser = serial.Serial("/dev/ttyACM0", 9600, timeout=5)
 
 def get_byte_str(bytedata):
     return "".join("\\x{:02x}".format(letter) for letter in bytedata)
 
 
 def read_uint8():
+    global text_buffer
+    global ser
     rcvd_bytes = ser.read()
     rcvd_int = int.from_bytes(rcvd_bytes, "little")
     if rcvd_int > 0:
-        print(f"Response: {response_names[rcvd_int]} ({get_byte_str(rcvd_bytes)})")
+        text_buffer.append(f"Response: {response_names[rcvd_int]} ({get_byte_str(rcvd_bytes)})")
     else:
-        print("No more data from Arduino.")
+        text_buffer.append("No more data from Arduino.")
     return rcvd_int
 
-
 def read_string():
+    global text_buffer
+    global ser
     rcvd = ser.readline()
-    print(f"Response: {rcvd}")
-
+    text_buffer.append(f"Response: {rcvd}")
+    return rcvd
 
 def write_uint8(data: int):
+    global text_buffer
+    global ser
     bytedata = data.to_bytes(1, "little")
-    print("Writing: " + get_byte_str(bytedata))
+    text_buffer.append("Writing: " + get_byte_str(bytedata))
     ser.write(bytedata)
 
 
 def write_uint16(data: int):
+    global text_buffer
+    global ser
     bytedata = data.to_bytes(2, "little")
-    print("Writing: " + get_byte_str(bytedata))
+    text_buffer.append("Writing: " + get_byte_str(bytedata))
     ser.write(bytedata)
 
+def write_sequence(parts: list) -> bool:
+    """Command sequence for writing data to the controller"""
+    global text_buffer
+    if int(parts[0]) not in data_write_method:
+        text_buffer.append("Unknown command")
+        return False
+
+    write_uint8(1)
+    response = read_uint8()
+    if response != 2:
+        text_buffer.append("Got unexpected response on HELLO, aborting...")
+        return False
+
+    write_uint8(int(parts[0]))
+    response = read_uint8()
+    if response != 3:
+        text_buffer.append("Got unexpected response on COMMAND, aborting...")
+        return False
+
+    write_uint8(int(parts[1]))
+    response = read_uint8()
+    if response != 3:
+        text_buffer.append("Got unexpected response on channel select, aborting...")
+        return False
+
+    if int(parts[0]) in data_write_method:
+        data_write_method[int(parts[0])](int(parts[2]))
+        response = read_uint8()
+        if response != 3:
+            text_buffer.append("Got unexpected response, data apparently not received...")
+            return False
+
+    return True
+
+def read_sequence(parts: list) -> bool:
+    global text_buffer
+    if int(parts[0]) not in data_read_method:
+        text_buffer.append("Unknown command")
+        return False
+
+    write_uint8(1)
+    response = read_uint8()
+    if response != 2:
+        text_buffer.append("Got unexpected response on HELLO, aborting...")
+        return False
+
+    write_uint8(int(parts[0]))
+    response = read_uint8()
+    if response != 3:
+        text_buffer.append("Got unexpected response on COMMAND, aborting...")
+        return False
+
+    write_uint8(int(parts[1]))
+    response = read_uint8()
+    if response != 3:
+        text_buffer.append("Got unexpected response on channel select, aborting...")
+        return False
+
+    if int(parts[0]) in data_read_method:
+        data_read_method[int(parts[0])]()
+
+    return True
+
+def read_user_input(message: str) -> str:
+    global input_line_position
+    stdscr.move(0, 0)
+    stdscr.deleteln()
+    curses.echo()
+    curses.nocbreak()
+    stdscr.nodelay(False)
+    stdscr.addstr(input_line_position, 0, message)
+    stdscr.refresh()
+    str_input = stdscr.getstr(input_line_position, len(message)).decode()
+    curses.noecho()
+    curses.cbreak()
+    stdscr.nodelay(True)
+    return str_input
 
 data_write_method = {
     64: write_uint16,
@@ -75,68 +164,80 @@ data_read_method = {
     71: read_string,
 }
 
-ser = serial.Serial("/dev/ttyACM0", 9600, timeout=5)
+def main(stdscr):
+    global text_buffer
+    global ser
+    global input_line_position
+    max_y, _ = stdscr.getmaxyx()
+    input_line_position = max_y - 2
+    curses.noecho()
+    curses.cbreak()
+    stdscr.keypad(True)
+    stdscr.nodelay(True)
+    stdscr.clear()
 
-print("Serial tester. Q quits.\n")
+    ser.reset_input_buffer()
 
-while True:
-    str_input = input("Input: ")
-    if str_input.upper() == "Q":
-        break
+    print("Serial tester. I opens input prompt, Q quits.\n")
 
-    parts = str_input.split(",")
+    while True:
+        c = stdscr.getch()
+        if c == ord('q') or c == ord('Q'):
+            break
 
-    if len(parts) == 4 or len(parts) == 3:
-        if len(parts) == 4 and int(parts[1]) not in data_write_method:
-            print("Unknown command")
-            continue
-
-        if len(parts) == 3 and int(parts[1]) not in data_read_method:
-            print("Unknown command")
-            continue
-
-        write_uint8(int(parts[0]))
-        response = read_uint8()
-        if response != 2:
-            print("Got unexpected response on HELLO, aborting...")
-            continue
-
-        write_uint8(int(parts[1]))
-        response = read_uint8()
-        if response != 3:
-            print("Got unexpected response on COMMAND, aborting...")
-            continue
-
-        write_uint8(int(parts[2]))
-        response = read_uint8()
-        if response != 3:
-            print("Got unexpected response on channel select, aborting...")
-            continue
-
-        if len(parts) == 4 and int(parts[1]) in data_write_method:
-            data_write_method[int(parts[1])](int(parts[3]))
-            response = read_uint8()
-            if response != 3:
-                print("Got unexpected response, data apparently not received...")
-                continue
-
-        if len(parts) == 3 and int(parts[1]) in data_read_method:
-            data_read_method[int(parts[1])]()
-    else:
-        try:
-            int_input = int(str_input)
-            if int_input >= 0 and int_input <= 255:
-                write_uint8(int_input)
-            elif int_input >= 256 and int_input <= 65535:
-                write_uint16(int_input)
+        if c == ord('i') or c == ord('I'):
+            tries = 0
+            str_input = read_user_input("Command sequence: ")
+            parts = str_input.split(",")
+            if len(parts) == 2:
+                text_buffer.append(f"Sending READ sequence: {str_input}")
+                while tries < 3:
+                    if read_sequence(parts):
+                        break
+                    tries += 1
+            elif len(parts) == 3:
+                text_buffer.append(f"Sending WRITE sequence: {str_input}")
+                while tries < 3:
+                    if write_sequence(parts):
+                        break
+                    tries += 1
             else:
-                print("Input too low or big.")
-        except ValueError:
-            print("Reading only...")
+                text_buffer.append(f"Bad sequence, not sending: {str_input}")
 
-    response = read_uint8()
-    while response > 0:
-        response = read_uint8()
+            if tries >= 3:
+                text_buffer.append("Sending sequence failed. Is controller connected?")
 
-print("Bye!")
-ser.close()
+        while ser.in_waiting > 0:
+            read_uint8()
+
+        if text_buffer:
+            max_y, _ = stdscr.getmaxyx()
+            input_line_position = max_y - 2
+
+        for i in range(len(text_buffer)):
+            line = text_buffer.pop(0)
+
+            stdscr.move(0, 0)
+            stdscr.deleteln()
+            stdscr.addstr(input_line_position, 0, line)
+
+        time.sleep(0.01)
+
+    ser.close()
+
+if __name__ == "__main__":
+    stdscr = curses.initscr()
+
+    try:
+        main(stdscr)
+    except Exception as e:
+        curses.nocbreak()
+        stdscr.keypad(False)
+        curses.echo()
+        curses.endwin()
+        print(f"Unexpected exception: {e}")
+    finally:
+        curses.nocbreak()
+        stdscr.keypad(False)
+        curses.echo()
+        curses.endwin()
