@@ -14,6 +14,7 @@ private:
     String channel;
 
 protected:
+    bool automatic;
     double Kp;
     double Ki;
     double Kd;

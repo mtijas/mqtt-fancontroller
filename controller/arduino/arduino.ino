@@ -78,6 +78,8 @@ void setup()
     events.notify_observers("ch2-speed", "----");
     events.notify_observers("ch1-output", "255");
     events.notify_observers("ch2-output", "255");
+    events.notify_observers("ch1-mode", "1");
+    events.notify_observers("ch2-mode", "1");
 }
 
 void loop()

@@ -15,6 +15,7 @@ PIDControlComponent::PIDControlComponent(
     this->setpoint = setpoint;
     this->input = input;
     this->output = output;
+    this->automatic = true;
 }
 
 void PIDControlComponent::setup()
@@ -38,10 +39,41 @@ void PIDControlComponent::notify(const String &event, const String &data)
     {
         *setpoint = data.toDouble();
     }
+    else if (event.equals(channel + "-kp"))
+    {
+        Kp = data.toDouble();
+        pid->SetTunings(Kp, Ki, Kd);
+    }
+    else if (event.equals(channel + "-ki"))
+    {
+        Ki = data.toDouble();
+        pid->SetTunings(Kp, Ki, Kd);
+    }
+    else if (event.equals(channel + "-kd"))
+    {
+        Kd = data.toDouble();
+        pid->SetTunings(Kp, Ki, Kd);
+    }
+    else if (event.equals(channel + "-mode"))
+    {
+        if (data.equals("0"))
+        {
+            automatic = false;
+            pid->SetMode(0);
+        }
+        else
+        {
+            automatic = true;
+            pid->SetMode(1);
+        }
+    }
 }
 
 void PIDControlComponent::update()
 {
     pid->Compute();
-    events->notify_observers(channel + "-output", String(*output));
+    if (automatic)
+    {
+        events->notify_observers(channel + "-output", String(*output));
+    }
 }
