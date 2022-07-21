@@ -19,7 +19,7 @@ void SerialComms::setup()
     setup(9600);
 }
 
-void SerialComms::notify(const String &event, const String &data) {}
+void SerialComms::notify(const char *event, const uint8_t channel, const char *data) {}
 
 void SerialComms::update()
 {
@@ -47,7 +47,7 @@ void SerialComms::update()
     writeCommand(RCVD);
 
     waitForData(1);
-    uint8_t channel = readUInt8();
+    char channel = readUInt8();
     if (channel < 1 || channel > 2)
     {
         error();
@@ -101,16 +101,20 @@ void SerialComms::waitForData(int num_bytes)
     }
 }
 
-void SerialComms::readTarget(uint8_t channel)
+void SerialComms::readTarget(const uint8_t channel)
 {
     uint16_t data = readUInt16();
     sPort->write(RCVD);
 
     double target = data / 100.0;
-    events->notify_observers("ch" + String(channel) + "-target", String(target));
+
+    char message[16];
+    dtostrf(target, 1, 1, message);
+
+    events->notify_observers("target", channel, message);
 }
 
-void SerialComms::readPidout(uint8_t channel)
+void SerialComms::readPidout(const uint8_t channel)
 {
     uint8_t data = readUInt8();
     if (data < 0 || data > 255)
@@ -120,10 +124,13 @@ void SerialComms::readPidout(uint8_t channel)
     }
     sPort->write(RCVD);
 
-    events->notify_observers("ch" + String(channel) + "-output", String(data));
+    char message[16];
+    snprintf(message, 16, "%i", data);
+
+    events->notify_observers("output", channel, message);
 }
 
-void SerialComms::readKp(uint8_t channel)
+void SerialComms::readKp(const uint8_t channel)
 {
     uint16_t data = readUInt16();
     if (data < 0 || data > 65535)
@@ -134,10 +141,13 @@ void SerialComms::readKp(uint8_t channel)
     sPort->write(RCVD);
 
     double Kp = data / 100.0;
-    events->notify_observers("ch" + String(channel) + "-kp", String(Kp));
-}
 
-void SerialComms::readKi(uint8_t channel)
+    char message[16];
+    dtostrf(Kp, 1, 2, message);
+
+    events->notify_observers("kp", channel, message);
+}
+void SerialComms::readKi(const uint8_t channel)
 {
     uint16_t data = readUInt16();
     if (data < 0 || data > 65535)
@@ -148,10 +158,13 @@ void SerialComms::readKi(uint8_t channel)
     sPort->write(RCVD);
 
     double Ki = data / 100.0;
-    events->notify_observers("ch" + String(channel) + "-ki", String(Ki));
-}
 
-void SerialComms::readKd(uint8_t channel)
+    char message[16];
+    dtostrf(Ki, 1, 2, message);
+
+    events->notify_observers("ki", channel, message);
+}
+void SerialComms::readKd(const uint8_t channel)
 {
     uint16_t data = readUInt16();
     if (data < 0 || data > 65535)
@@ -162,10 +175,13 @@ void SerialComms::readKd(uint8_t channel)
     sPort->write(RCVD);
 
     double Kd = data / 100.0;
-    events->notify_observers("ch" + String(channel) + "-kd", String(Kd));
-}
 
-void SerialComms::readMode(uint8_t channel)
+    char message[16];
+    dtostrf(Kd, 1, 2, message);
+
+    events->notify_observers("kd", channel, message);
+}
+void SerialComms::readMode(const uint8_t channel)
 {
     uint8_t data = readUInt8();
     if (data < 0 || data > 1)
@@ -175,7 +191,10 @@ void SerialComms::readMode(uint8_t channel)
     }
     sPort->write(RCVD);
 
-    events->notify_observers("ch" + String(channel) + "-mode", String(data));
+    char message[16];
+    snprintf(message, 16, "%i", data);
+
+    events->notify_observers("mode", channel, message);
 }
 
 uint8_t SerialComms::readUInt8()

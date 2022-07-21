@@ -6,4 +6,4 @@
  * @param event
  * @param data
  */
-void Observer::notify(const String &event, const String &data){};
+void Observer::notify(const char *event, const uint8_t channel, const char *data){};

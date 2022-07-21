@@ -26,7 +26,7 @@ PIDControlComponent pc1(
     &events,
     &pid1,
     1000,
-    "ch1",
+    1,
     &pid1_input,
     &pid1_output,
     &pid1_setpoint);
@@ -37,13 +37,13 @@ PIDControlComponent pc2(
     &events,
     &pid2,
     1000,
-    "ch2",
+    2,
     &pid2_input,
     &pid2_output,
     &pid2_setpoint);
 
-PWMFan fan1(&events, 3000, 3, 5, "ch1");
-PWMFan fan2(&events, 3000, 4, 6, "ch2");
+PWMFan fan1(&events, 3000, 3, 5, 1);
+PWMFan fan2(&events, 3000, 4, 6, 2);
 
 DS18B20 ds(DS18B20_PIN);
 Maxim18b20 maxim(&events, &ds, 5000, 2);
@@ -70,16 +70,16 @@ void setup()
 
     serialcomms.setup(9600);
 
-    events.notify_observers("ch1-temp", "--.--");
-    events.notify_observers("ch2-temp", "--.--");
-    events.notify_observers("ch1-target", "30.00");
-    events.notify_observers("ch2-target", "30.00");
-    events.notify_observers("ch1-speed", "----");
-    events.notify_observers("ch2-speed", "----");
-    events.notify_observers("ch1-output", "255");
-    events.notify_observers("ch2-output", "255");
-    events.notify_observers("ch1-mode", "1");
-    events.notify_observers("ch2-mode", "1");
+    events.notify_observers("temp", 1, "--.-");
+    events.notify_observers("temp", 2, "--.-");
+    events.notify_observers("target", 1, "30.0");
+    events.notify_observers("target", 2, "30.0");
+    events.notify_observers("speed", 1, "----");
+    events.notify_observers("speed", 2, "----");
+    events.notify_observers("output", 1, "255");
+    events.notify_observers("output", 2, "255");
+    events.notify_observers("mode", 1, "1");
+    events.notify_observers("mode", 2, "1");
 }
 
 void loop()

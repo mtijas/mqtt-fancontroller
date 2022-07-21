@@ -11,7 +11,7 @@ class PIDControlComponent
     : public TimedComponent
 {
 private:
-    String channel;
+    char channel;
 
 protected:
     bool automatic;
@@ -28,12 +28,12 @@ public:
         Observable *events,
         PID *pid,
         int update_interval,
-        const String &channel,
+        const uint8_t channel,
         double *input,
         double *output,
         double *setpoint);
     void setup();
-    void notify(const String &event, const String &data);
+    void notify(const char *event, const uint8_t channel, const char *data);
     void update();
 };
 

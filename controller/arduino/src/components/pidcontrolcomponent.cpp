@@ -4,7 +4,7 @@ PIDControlComponent::PIDControlComponent(
     Observable *events,
     PID *pid,
     int update_interval,
-    const String &channel,
+    const uint8_t channel,
     double *input,
     double *output,
     double *setpoint)
@@ -29,34 +29,34 @@ void PIDControlComponent::setup()
     events->register_observer(this);
 }
 
-void PIDControlComponent::notify(const String &event, const String &data)
+void PIDControlComponent::notify(const char *event, const uint8_t channel, const char *data)
 {
-    if (event.equals(channel + "-temp"))
+    if (strncmp(event, "temp", 4) == 0 && channel == this->channel)
     {
-        *input = data.toDouble();
+        *input = atof(data);
     }
-    else if (event.equals(channel + "-target"))
+    else if (strncmp(event, "target", 6) == 0 && channel == this->channel)
     {
-        *setpoint = data.toDouble();
+        *setpoint = atof(data);
     }
-    else if (event.equals(channel + "-kp"))
+    else if (strncmp(event, "kp", 2) == 0 && channel == this->channel)
     {
-        Kp = data.toDouble();
+        Kp = atof(data);
         pid->SetTunings(Kp, Ki, Kd);
     }
-    else if (event.equals(channel + "-ki"))
+    else if (strncmp(event, "ki", 2) == 0 && channel == this->channel)
     {
-        Ki = data.toDouble();
+        Ki = atof(data);
         pid->SetTunings(Kp, Ki, Kd);
     }
-    else if (event.equals(channel + "-kd"))
+    else if (strncmp(event, "kd", 2) == 0 && channel == this->channel)
     {
-        Kd = data.toDouble();
+        Kd = atof(data);
         pid->SetTunings(Kp, Ki, Kd);
     }
-    else if (event.equals(channel + "-mode"))
+    else if (strncmp(event, "mode", 4) == 0 && channel == this->channel)
     {
-        if (data.equals("0"))
+        if (strncmp(data, "0", 1) == 0)
         {
             automatic = false;
             pid->SetMode(0);
@@ -71,9 +71,13 @@ void PIDControlComponent::notify(const String &event, const String &data)
 
 void PIDControlComponent::update()
 {
+    char message[6];
+
     pid->Compute();
     if (automatic)
     {
-        events->notify_observers(channel + "-output", String(*output));
+        dtostrf(*output, 1, 1, message);
+
+        events->notify_observers("output", channel, message);
     }
 }

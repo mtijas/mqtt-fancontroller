@@ -17,7 +17,7 @@ private:
 public:
     Maxim18b20(Observable *events, DS18B20 *ds, int update_interval, int port);
     void setup();
-    void notify(const String &event, const String &data);
+    void notify(const char *event, const uint8_t channel, const char *data);
     void update();
 };
 

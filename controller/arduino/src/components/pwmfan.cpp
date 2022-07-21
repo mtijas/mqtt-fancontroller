@@ -7,7 +7,7 @@ PWMFan::PWMFan(
     int update_interval,
     int sense_pin,
     int pwm_pin,
-    const String &channel)
+    const uint8_t channel)
     : TimedComponent(events, update_interval)
 {
     this->sense_pin = sense_pin;
@@ -25,11 +25,11 @@ void PWMFan::setup()
     events->register_observer(this);
 }
 
-void PWMFan::notify(const String &event, const String &data)
+void PWMFan::notify(const char *event, const uint8_t channel, const char *data)
 {
-    if (event.equals(channel + "-output"))
+    if (strncmp(event, "output", 6) == 0 && channel == this->channel)
     {
-        int value = data.toInt();
+        int value = atoi(data);
         if (value >= 0 && value <= 255)
         {
             analogWrite(pwm_pin, value);
@@ -39,13 +39,18 @@ void PWMFan::notify(const String &event, const String &data)
 
 void PWMFan::update()
 {
+    char message[6];
+
     int pulses = fan_pulses;
     fan_pulses = 0;
 
     int elapsed_seconds = time_elapsed / 1000;
     int pulses_per_minute = pulses / elapsed_seconds * 60;
     int rpm = pulses_per_minute / PULSES_PER_REVOLUTION;
-    events->notify_observers(channel + "-speed", String(rpm));
+
+    snprintf(message, sizeof message, "%i", rpm);
+
+    events->notify_observers("speed", channel, message);
 }
 
 void PWMFan::pickPulse()

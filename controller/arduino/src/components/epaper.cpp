@@ -38,7 +38,7 @@ void Epaper::partUpdate()
 }
 
 void Epaper::printString(
-    const String &data,
+    const char *data,
     int font_size,
     int x,
     int y,
@@ -48,7 +48,7 @@ void Epaper::printString(
 }
 
 void Epaper::printString(
-    const String &data,
+    const char *data,
     int font_size,
     int x,
     int y,
@@ -67,9 +67,7 @@ void Epaper::printString(
 
     sFONT *font = getFont(font_size);
 
-    char char_buf[30];
-    data.toCharArray(char_buf, 30);
-    paint->DrawStringAt(2, 2, char_buf, font, color);
+    paint->DrawStringAt(2, 2, data, font, color);
     epd->SetFrameMemory(paint->GetImage(), x, y, paint->GetWidth(), paint->GetHeight());
 }
 

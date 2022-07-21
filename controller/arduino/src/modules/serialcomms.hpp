@@ -34,12 +34,12 @@ protected:
     int bauds;
     void writeCommand(uint8_t aCommand);
     void waitForData(int num_bytes);
-    void readTarget(uint8_t channel);
-    void readKp(uint8_t channel);
-    void readKi(uint8_t channel);
-    void readKd(uint8_t channel);
-    void readMode(uint8_t channel);
-    void readPidout(uint8_t channel);
+    void readTarget(const uint8_t channel);
+    void readKp(const uint8_t channel);
+    void readKi(const uint8_t channel);
+    void readKd(const uint8_t channel);
+    void readMode(const uint8_t channel);
+    void readPidout(const uint8_t channel);
     void error();
     uint8_t readUInt8();
     uint16_t readUInt16();
@@ -48,7 +48,7 @@ public:
     SerialComms(Observable *events, int update_interval, HardwareSerial *sPort);
     void setup(int bauds);
     void setup();
-    void notify(const String &event, const String &data);
+    void notify(const char *event, const uint8_t channel, const char *data);
     void update();
 };
 

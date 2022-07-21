@@ -7,12 +7,12 @@
 class Observable
 {
 private:
-    Observer* observers[50];
+    Observer *observers[50];
     int arr_length;
 
 public:
-    void register_observer(Observer* observer);
-    void notify_observers(const String &event, const String &data);
+    void register_observer(Observer *observer);
+    void notify_observers(const char *event, const uint8_t channel, const char *data);
 };
 
 #endif

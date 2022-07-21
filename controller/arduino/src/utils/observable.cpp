@@ -21,10 +21,10 @@ void Observable::register_observer(Observer* observer)
  *
  * @param data
  */
-void Observable::notify_observers(const String &event, const String &data)
+void Observable::notify_observers(const char *event, const uint8_t channel, const char *data)
 {
     for (int i = 0; i < arr_length; i++)
     {
-        observers[i]->notify(event, data);
+        observers[i]->notify(event, channel, data);
     }
 }

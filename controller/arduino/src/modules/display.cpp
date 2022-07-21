@@ -34,45 +34,50 @@ void Display::update()
     epaper->fullUpdate();
 }
 
-void Display::notify(const String &event, const String &data)
+void Display::notify(const char *event, const uint8_t channel, const char *data)
 {
-    if (event.equals("ch1-temp"))
+    char buffer[7];
+    if (strncmp(event, "temp", 4) == 0 && channel == 1)
     {
         printLeftString(data, 20, 32, COLORED, UNCOLORED);
     }
-    else if (event.equals("ch2-temp"))
+    else if (strncmp(event, "temp", 4) == 0 && channel == 2)
     {
         printRightString(data, 20, 32, COLORED, UNCOLORED);
     }
-    else if (event.equals("ch1-target"))
+    else if (strncmp(event, "target", 6) == 0 && channel == 1)
     {
         printLeftString(data, 20, 72, COLORED, UNCOLORED);
     }
-    else if (event.equals("ch2-target"))
+    else if (strncmp(event, "target", 6) == 0 && channel == 2)
     {
         printRightString(data, 20, 72, COLORED, UNCOLORED);
     }
-    else if (event.equals("ch1-speed"))
+    else if (strncmp(event, "speed", 5) == 0 && channel == 1)
     {
         printLeftString(data, 20, 112, COLORED, UNCOLORED);
     }
-    else if (event.equals("ch2-speed"))
+    else if (strncmp(event, "speed", 5) == 0 && channel == 2)
     {
         printRightString(data, 20, 112, COLORED, UNCOLORED);
     }
-    else if (event.equals("ch1-output"))
+    else if (strncmp(event, "output", 6) == 0 && channel == 1)
     {
-        float percent = data.toFloat() / 255 * 100;
-        printLeftString(String(percent), 20, 152, COLORED, UNCOLORED);
+        float data_fl = atof(data);
+        float percent = data_fl / 255 * 100;
+        dtostrf(percent, 1, 1, buffer);
+        printLeftString(buffer, 20, 152, COLORED, UNCOLORED);
     }
-    else if (event.equals("ch2-output"))
+    else if (strncmp(event, "output", 6) == 0 && channel == 2)
     {
-        float percent = data.toFloat() / 255 * 100;
-        printRightString(String(percent), 20, 152, COLORED, UNCOLORED);
+        float data_fl = atof(data);
+        float percent = data_fl / 255 * 100;
+        dtostrf(percent, 1, 1, buffer);
+        printRightString(buffer, 20, 152, COLORED, UNCOLORED);
     }
-    else if (event.equals("ch1-mode"))
+    else if (strncmp(event, "mode", 4) == 0 && channel == 1)
     {
-        if (data.equals("0"))
+        if (strncmp(data, "0", 1) == 0)
         {
             printLeftString("MANUAL", 20, 176, COLORED, UNCOLORED);
         }
@@ -81,9 +86,9 @@ void Display::notify(const String &event, const String &data)
             printLeftString("Auto", 20, 176, COLORED, UNCOLORED);
         }
     }
-    else if (event.equals("ch2-mode"))
+    else if (strncmp(event, "mode", 4) == 0 && channel == 2)
     {
-        if (data.equals("0"))
+        if (strncmp(data, "0", 1) == 0)
         {
             printRightString("MANUAL", 20, 176, COLORED, UNCOLORED);
         }
@@ -94,18 +99,18 @@ void Display::notify(const String &event, const String &data)
     }
 }
 
-void Display::printFullString(const String &data, int font_size, int y, int color, int background)
+void Display::printFullString(const char *data, int font_size, int y, int color, int background)
 {
     epaper->printString(data, font_size, 0, y, width, color, background);
 }
 
-void Display::printLeftString(const String &data, int font_size, int y, int color, int background)
+void Display::printLeftString(const char *data, int font_size, int y, int color, int background)
 {
     int total_width = width / 2;
     epaper->printString(data, font_size, 0, y, total_width, color, background);
 }
 
-void Display::printRightString(const String &data, int font_size, int y, int color, int background)
+void Display::printRightString(const char *data, int font_size, int y, int color, int background)
 {
     int x = width / 2 + 4;
     int total_width = width / 2 - 4;

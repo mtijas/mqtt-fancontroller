@@ -10,7 +10,7 @@ class PWMFan
     : public TimedComponent
 {
 private:
-    String channel;
+    char channel;
     int sense_pin;
     int pwm_pin;
     int fan_pulses;
@@ -21,9 +21,9 @@ public:
         int update_interval,
         int sense_pin,
         int pwm_pin,
-        const String &channel);
+        const uint8_t channel);
     void setup();
-    void notify(const String &event, const String &data);
+    void notify(const char *event, const uint8_t channel, const char *data);
     void update();
     void pickPulse();
 };
