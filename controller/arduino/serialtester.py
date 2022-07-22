@@ -29,8 +29,6 @@ commands = {
     "SET_MODE": 69,
     "GET_STATUS": 70,
     "GET_SETTINGS": 71,
-    "REPORT_STATUS": 72,
-    "REPORT_SETTINGS": 73,
 }
 
 text_buffer = list()
@@ -81,38 +79,49 @@ def write_uint16(data: int):
     text_buffer.append("Tx: " + get_byte_str(bytedata))
     ser.write(bytedata)
 
-def read_status():
+def receive_controller_status():
     received = read_int16()
-    text_buffer.append(f"Interpreted as {received/10}")
+    if received > -32768:
+        text_buffer.append(f"Interpreted as {received/10}")
     received = read_int16()
-    text_buffer.append(f"Interpreted as {received/10}")
+    if received > -32768:
+        text_buffer.append(f"Interpreted as {received/10}")
     received = read_int16()
-    text_buffer.append(f"Interpreted as {received}")
+    if received > -32768:
+        text_buffer.append(f"Interpreted as {received}")
     received = read_int16()
-    text_buffer.append(f"Interpreted as {received}")
+    if received > -32768:
+        text_buffer.append(f"Interpreted as {received}")
 
     write_uint8(commands["RCVD"])
     return True
 
-def read_settings():
+def receive_controller_settings():
     received = read_uint16()
-    text_buffer.append(f"Interpreted as {received}")
+    if received > 0:
+        text_buffer.append(f"Interpreted as {received}")
     received = read_uint16()
-    text_buffer.append(f"Interpreted as {received/100}")
+    if received > 0:
+        text_buffer.append(f"Interpreted as {received/100}")
     received = read_uint16()
-    text_buffer.append(f"Interpreted as {received/100}")
+    if received > 0:
+        text_buffer.append(f"Interpreted as {received/100}")
     received = read_uint16()
-    text_buffer.append(f"Interpreted as {received/100}")
+    if received > 0:
+        text_buffer.append(f"Interpreted as {received/100}")
 
     write_uint8(commands["RCVD"])
     return True
 
-def write_sequence(parts: list) -> bool:
+def write_to_controller_sequence(parts: list) -> bool:
     """Command sequence for writing data to the controller"""
     global text_buffer
+    global ser
     if int(parts[0]) not in data_write_method:
         text_buffer.append("Unknown command")
         return False
+
+    ser.reset_input_buffer()
 
     write_uint8(commands["HELLO"])
     response = read_uint8()
@@ -135,11 +144,14 @@ def write_sequence(parts: list) -> bool:
     text_buffer.append("Transfer failed.")
     return False
 
-def read_sequence(parts: list) -> bool:
+def request_from_controller_sequence(parts: list) -> bool:
     global text_buffer
+    global ser
     if int(parts[0]) not in data_read_method:
         text_buffer.append("Unknown command")
         return False
+
+    ser.reset_input_buffer()
 
     write_uint8(commands["HELLO"])
     response = read_uint8()
@@ -156,7 +168,7 @@ def read_sequence(parts: list) -> bool:
 
 def read_user_input(message: str) -> str:
     global input_line_position
-    stdscr.move(0, 0)
+    stdscr.move(2, 0)
     stdscr.deleteln()
     curses.echo()
     curses.nocbreak()
@@ -179,16 +191,18 @@ data_write_method = {
 }
 
 data_read_method = {
-    70: read_status,
-    71: read_settings,
+    70: receive_controller_status,
+    71: receive_controller_settings,
 }
 
 def main(stdscr):
     global text_buffer
     global ser
     global input_line_position
+    auto_report = False
+    previous_autoreport = time.monotonic()
     max_y, _ = stdscr.getmaxyx()
-    input_line_position = max_y - 2
+    input_line_position = max_y - 3
     result = False
     curses.noecho()
     curses.cbreak()
@@ -198,41 +212,54 @@ def main(stdscr):
 
     ser.reset_input_buffer()
 
-    print("Serial tester. I opens input prompt, Q quits.\n")
+    line = f"i: input terminal, a: autoreporting (now: {auto_report}), q: quit  "
+    stdscr.addstr(0, 0, line)
 
     while True:
         c = stdscr.getch()
         if c == ord('q') or c == ord('Q'):
             break
 
+        if c == ord('a') or c == ord('A'):
+            auto_report = not auto_report
+            line = f"i: input terminal, a: autoreporting (now: {auto_report}), q: quit  "
+            stdscr.addstr(0, 0, line)
+
         if c == ord('i') or c == ord('I'):
             str_input = read_user_input("Command sequence: ")
             parts = str_input.split(",")
             if len(parts) == 2:
                 text_buffer.append(f"Sending READ sequence: {str_input}")
-                result = read_sequence(parts)
+                result = request_from_controller_sequence(parts)
             elif len(parts) == 3:
                 text_buffer.append(f"Sending WRITE sequence: {str_input}")
-                result = write_sequence(parts)
+                result = write_to_controller_sequence(parts)
             else:
                 text_buffer.append(f"Bad sequence, not sending: {str_input}")
 
             if not result:
                 text_buffer.append("Sending sequence failed. Is controller connected?")
 
+        if auto_report and (time.monotonic() - previous_autoreport > 15):
+            previous_autoreport = time.monotonic()
+            text_buffer.append("Requesting reports...")
+            request_from_controller_sequence([70,1])
+            request_from_controller_sequence([70,2])
+
         while ser.in_waiting > 0:
-            read_uint8()
+            result = read_uint8()
 
         if text_buffer:
             max_y, _ = stdscr.getmaxyx()
-            input_line_position = max_y - 2
+            input_line_position = max_y - 3
 
         for i in range(len(text_buffer)):
             line = text_buffer.pop(0)
 
-            stdscr.move(0, 0)
+            stdscr.move(2, 0)
             stdscr.deleteln()
             stdscr.addstr(input_line_position, 0, line)
+            stdscr.move(input_line_position + 1, 0)
 
         time.sleep(0.01)
 

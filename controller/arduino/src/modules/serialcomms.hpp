@@ -21,8 +21,6 @@ enum Command
     SET_MODE = 69,
     GET_STATUS = 70, //Status report request
     GET_SETTINGS = 71, //Settings report request
-    REPORT_STATUS = 72, //Incoming status report
-    REPORT_SETTINGS = 73 //Incoming settings report
 };
 
 typedef enum Command Command;
