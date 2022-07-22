@@ -240,7 +240,7 @@ def main(stdscr):
             if not result:
                 text_buffer.append("Sending sequence failed. Is controller connected?")
 
-        if auto_report and (time.monotonic() - previous_autoreport > 15):
+        if auto_report and (time.monotonic() - previous_autoreport > 10):
             previous_autoreport = time.monotonic()
             text_buffer.append("Requesting reports...")
             request_from_controller_sequence([70,1])
