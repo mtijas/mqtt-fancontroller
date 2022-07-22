@@ -21,7 +21,7 @@ Observable events;
 SerialComms serialcomms(&events, 1000, &Serial);
 
 double pid1_input, pid1_output, pid1_setpoint;
-PID pid1(&pid1_input, &pid1_output, &pid1_setpoint, 5.0, 0.2, 1.0, REVERSE);
+PID pid1(&pid1_input, &pid1_output, &pid1_setpoint, 0, 0, 0, REVERSE);
 PIDControlComponent pc1(
     &events,
     &pid1,
@@ -32,7 +32,7 @@ PIDControlComponent pc1(
     &pid1_setpoint);
 
 double pid2_input, pid2_output, pid2_setpoint;
-PID pid2(&pid2_input, &pid2_output, &pid2_setpoint, 5.0, 0.2, 1.0, REVERSE);
+PID pid2(&pid2_input, &pid2_output, &pid2_setpoint, 0, 0, 0, REVERSE);
 PIDControlComponent pc2(
     &events,
     &pid2,
@@ -80,6 +80,12 @@ void setup()
     events.notify_observers("output", 2, "255");
     events.notify_observers("mode", 1, "1");
     events.notify_observers("mode", 2, "1");
+    events.notify_observers("kp", 1, "5.0");
+    events.notify_observers("kp", 2, "5.0");
+    events.notify_observers("ki", 1, "0.2");
+    events.notify_observers("ki", 2, "0.2");
+    events.notify_observers("kd", 1, "1.0");
+    events.notify_observers("kd", 2, "1.0");
 }
 
 void loop()

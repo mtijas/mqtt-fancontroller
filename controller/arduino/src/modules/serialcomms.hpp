@@ -19,8 +19,10 @@ enum Command
     SET_KI = 67,
     SET_KD = 68,
     SET_MODE = 69,
-    GET_DATA = 70,
-    GET_SETTINGS = 71
+    GET_STATUS = 70, //Status report request
+    GET_SETTINGS = 71, //Settings report request
+    REPORT_STATUS = 72, //Incoming status report
+    REPORT_SETTINGS = 73 //Incoming settings report
 };
 
 typedef enum Command Command;
@@ -32,7 +34,8 @@ protected:
     HardwareSerial *sPort;
     bool lock;
     int bauds;
-    void writeCommand(uint8_t aCommand);
+    int16_t status[2][4]; //dim 1: channels, dim 2: temp, target, speed, output
+    uint16_t settings[2][4]; //dim 1: channels, dim 2: mode, kp, ki, kd
     void waitForData(int num_bytes);
     void readTarget(const uint8_t channel);
     void readKp(const uint8_t channel);
@@ -40,9 +43,13 @@ protected:
     void readKd(const uint8_t channel);
     void readMode(const uint8_t channel);
     void readPidout(const uint8_t channel);
+    void sendStatusReport(const uint8_t channel);
+    void sendSettingsReport(const uint8_t channel);
     void error();
     uint8_t readUInt8();
     uint16_t readUInt16();
+    void writeUInt16(uint16_t);
+    void writeInt16(int16_t);
 
 public:
     SerialComms(Observable *events, int update_interval, HardwareSerial *sPort);

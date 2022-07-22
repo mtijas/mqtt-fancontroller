@@ -15,20 +15,22 @@ import serial
 import curses
 import time
 
-response_names = {
-    1: "HELLO",
-    2: "ACK",
-    3: "RCVD",
-    6: "END",
-    7: "ERROR",
-    64: "SET_TARGET",
-    65: "SET_OUTPUT",
-    66: "SET_KP",
-    67: "SET_KI",
-    68: "SET_KD",
-    69: "SET_MODE",
-    70: "GET_DATA",
-    71: "GET_SETTINGS",
+commands = {
+    "HELLO": 1,
+    "ACK": 2,
+    "RCVD": 3,
+    "END": 6,
+    "ERROR": 7,
+    "SET_TARGET": 64,
+    "SET_OUTPUT": 65,
+    "SET_KP": 66,
+    "SET_KI": 67,
+    "SET_KD": 68,
+    "SET_MODE": 69,
+    "GET_STATUS": 70,
+    "GET_SETTINGS": 71,
+    "REPORT_STATUS": 72,
+    "REPORT_SETTINGS": 73,
 }
 
 text_buffer = list()
@@ -38,30 +40,37 @@ ser = serial.Serial("/dev/ttyACM0", 9600, timeout=5)
 def get_byte_str(bytedata):
     return "".join("\\x{:02x}".format(letter) for letter in bytedata)
 
-
 def read_uint8():
     global text_buffer
     global ser
     rcvd_bytes = ser.read()
     rcvd_int = int.from_bytes(rcvd_bytes, "little")
     if rcvd_int > 0:
-        text_buffer.append(f"Response: {response_names[rcvd_int]} ({get_byte_str(rcvd_bytes)})")
+        text_buffer.append(f"Rx: {get_byte_str(rcvd_bytes)}")
     else:
-        text_buffer.append("No more data from Arduino.")
+        text_buffer.append("No data received.")
     return rcvd_int
 
-def read_string():
+def read_uint16():
     global text_buffer
     global ser
-    rcvd = ser.readline()
-    text_buffer.append(f"Response: {rcvd}")
-    return rcvd
+    rcvd_bytes = ser.read(2)
+    rcvd_int = int.from_bytes(rcvd_bytes, "little")
+    if rcvd_int > 0:
+        text_buffer.append(f"Rx: {get_byte_str(rcvd_bytes)}")
+    else:
+        text_buffer.append("No data received.")
+    return rcvd_int
+
+def read_int16():
+    received = read_uint16()
+    return received - 32768
 
 def write_uint8(data: int):
     global text_buffer
     global ser
     bytedata = data.to_bytes(1, "little")
-    text_buffer.append("Writing: " + get_byte_str(bytedata))
+    text_buffer.append("Tx: " + get_byte_str(bytedata))
     ser.write(bytedata)
 
 
@@ -69,8 +78,34 @@ def write_uint16(data: int):
     global text_buffer
     global ser
     bytedata = data.to_bytes(2, "little")
-    text_buffer.append("Writing: " + get_byte_str(bytedata))
+    text_buffer.append("Tx: " + get_byte_str(bytedata))
     ser.write(bytedata)
+
+def read_status():
+    received = read_int16()
+    text_buffer.append(f"Interpreted as {received/10}")
+    received = read_int16()
+    text_buffer.append(f"Interpreted as {received/10}")
+    received = read_int16()
+    text_buffer.append(f"Interpreted as {received}")
+    received = read_int16()
+    text_buffer.append(f"Interpreted as {received}")
+
+    write_uint8(commands["RCVD"])
+    return True
+
+def read_settings():
+    received = read_uint16()
+    text_buffer.append(f"Interpreted as {received}")
+    received = read_uint16()
+    text_buffer.append(f"Interpreted as {received/100}")
+    received = read_uint16()
+    text_buffer.append(f"Interpreted as {received/100}")
+    received = read_uint16()
+    text_buffer.append(f"Interpreted as {received/100}")
+
+    write_uint8(commands["RCVD"])
+    return True
 
 def write_sequence(parts: list) -> bool:
     """Command sequence for writing data to the controller"""
@@ -79,32 +114,26 @@ def write_sequence(parts: list) -> bool:
         text_buffer.append("Unknown command")
         return False
 
-    write_uint8(1)
+    write_uint8(commands["HELLO"])
     response = read_uint8()
-    if response != 2:
+    if response != commands["ACK"]:
         text_buffer.append("Got unexpected response on HELLO, aborting...")
         return False
 
     write_uint8(int(parts[0]))
-    response = read_uint8()
-    if response != 3:
-        text_buffer.append("Got unexpected response on COMMAND, aborting...")
-        return False
-
     write_uint8(int(parts[1]))
+
+    # Writing data is always a simple task of writing n number of bytes
+    # Response should be byte \x03, so we may just read it here
+    data_write_method[int(parts[0])](int(parts[2]))
     response = read_uint8()
-    if response != 3:
-        text_buffer.append("Got unexpected response on channel select, aborting...")
-        return False
+    if response == commands["RCVD"]:
+        return True
+    else:
+        text_buffer.append(f"Unexpected response (was: {response}).")
 
-    if int(parts[0]) in data_write_method:
-        data_write_method[int(parts[0])](int(parts[2]))
-        response = read_uint8()
-        if response != 3:
-            text_buffer.append("Got unexpected response, data apparently not received...")
-            return False
-
-    return True
+    text_buffer.append("Transfer failed.")
+    return False
 
 def read_sequence(parts: list) -> bool:
     global text_buffer
@@ -112,28 +141,18 @@ def read_sequence(parts: list) -> bool:
         text_buffer.append("Unknown command")
         return False
 
-    write_uint8(1)
+    write_uint8(commands["HELLO"])
     response = read_uint8()
-    if response != 2:
+    if response != commands["ACK"]:
         text_buffer.append("Got unexpected response on HELLO, aborting...")
         return False
 
     write_uint8(int(parts[0]))
-    response = read_uint8()
-    if response != 3:
-        text_buffer.append("Got unexpected response on COMMAND, aborting...")
-        return False
-
     write_uint8(int(parts[1]))
-    response = read_uint8()
-    if response != 3:
-        text_buffer.append("Got unexpected response on channel select, aborting...")
-        return False
 
-    if int(parts[0]) in data_read_method:
-        data_read_method[int(parts[0])]()
-
-    return True
+    # Receiving data is more complicated than sending commands, so we'll
+    # expect boolean from the method instead of reading single byte here.
+    return data_read_method[int(parts[0])]()
 
 def read_user_input(message: str) -> str:
     global input_line_position
@@ -160,8 +179,8 @@ data_write_method = {
 }
 
 data_read_method = {
-    70: read_string,
-    71: read_string,
+    70: read_status,
+    71: read_settings,
 }
 
 def main(stdscr):
@@ -170,6 +189,7 @@ def main(stdscr):
     global input_line_position
     max_y, _ = stdscr.getmaxyx()
     input_line_position = max_y - 2
+    result = False
     curses.noecho()
     curses.cbreak()
     stdscr.keypad(True)
@@ -186,25 +206,18 @@ def main(stdscr):
             break
 
         if c == ord('i') or c == ord('I'):
-            tries = 0
             str_input = read_user_input("Command sequence: ")
             parts = str_input.split(",")
             if len(parts) == 2:
                 text_buffer.append(f"Sending READ sequence: {str_input}")
-                while tries < 3:
-                    if read_sequence(parts):
-                        break
-                    tries += 1
+                result = read_sequence(parts)
             elif len(parts) == 3:
                 text_buffer.append(f"Sending WRITE sequence: {str_input}")
-                while tries < 3:
-                    if write_sequence(parts):
-                        break
-                    tries += 1
+                result = write_sequence(parts)
             else:
                 text_buffer.append(f"Bad sequence, not sending: {str_input}")
 
-            if tries >= 3:
+            if not result:
                 text_buffer.append("Sending sequence failed. Is controller connected?")
 
         while ser.in_waiting > 0:
