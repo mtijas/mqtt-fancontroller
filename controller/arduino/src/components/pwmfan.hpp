@@ -13,7 +13,7 @@ private:
     char channel;
     int sense_pin;
     int pwm_pin;
-    int fan_pulses;
+    volatile int fan_pulses;
 
 public:
     PWMFan(

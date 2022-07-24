@@ -14,7 +14,7 @@
 #define DC_PIN 9
 #define CS_PIN 10
 #define BUSY_PIN 7
-#define DS18B20_PIN 2
+#define DS18B20_PIN 4
 
 Observable events;
 
@@ -42,11 +42,11 @@ PIDControlComponent pc2(
     &pid2_output,
     &pid2_setpoint);
 
-PWMFan fan1(&events, 3000, 3, 5, 1);
-PWMFan fan2(&events, 3000, 4, 6, 2);
+PWMFan fan1(&events, 3000, 2, 5, 1);
+PWMFan fan2(&events, 3000, 3, 6, 2);
 
 DS18B20 ds(DS18B20_PIN);
-Maxim18b20 maxim(&events, &ds, 5000, 2);
+Maxim18b20 maxim(&events, &ds, 5000, DS18B20_PIN);
 
 unsigned char image[512];
 Paint paint(image, 0, 0);
@@ -60,10 +60,10 @@ void setup()
     display.setup();
     maxim.setup();
     fan1.setup();
-    attachInterrupt(digitalPinToInterrupt(3), pickFan1Pulse, FALLING);
+    attachInterrupt(digitalPinToInterrupt(2), pickFan1Pulse, FALLING);
 
     fan2.setup();
-    attachInterrupt(digitalPinToInterrupt(4), pickFan2Pulse, FALLING);
+    attachInterrupt(digitalPinToInterrupt(3), pickFan2Pulse, FALLING);
 
     pc1.setup();
     pc2.setup();
@@ -80,12 +80,12 @@ void setup()
     events.notify_observers("output", 2, "255");
     events.notify_observers("mode", 1, "1");
     events.notify_observers("mode", 2, "1");
-    events.notify_observers("kp", 1, "5.0");
-    events.notify_observers("kp", 2, "5.0");
-    events.notify_observers("ki", 1, "0.2");
-    events.notify_observers("ki", 2, "0.2");
-    events.notify_observers("kd", 1, "1.0");
-    events.notify_observers("kd", 2, "1.0");
+    events.notify_observers("kp", 1, "4.0");
+    events.notify_observers("kp", 2, "4.0");
+    events.notify_observers("ki", 1, "0.4");
+    events.notify_observers("ki", 2, "0.4");
+    events.notify_observers("kd", 1, "2.0");
+    events.notify_observers("kd", 2, "2.0");
 }
 
 void loop()

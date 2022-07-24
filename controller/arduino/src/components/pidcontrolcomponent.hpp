@@ -21,6 +21,8 @@ protected:
     double *setpoint;
     double *input;
     double *output;
+    unsigned long previous_input_timestamp;
+    bool notemp;
     PID *pid;
 
 public:

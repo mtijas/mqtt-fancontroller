@@ -22,7 +22,7 @@ void PWMFan::setup()
     pinMode(pwm_pin, OUTPUT);
     digitalWrite(pwm_pin, HIGH);
 
-    events->register_observer(this);
+    this->events->register_observer(this);
 }
 
 void PWMFan::notify(const char *event, const uint8_t channel, const char *data)
@@ -41,8 +41,8 @@ void PWMFan::update()
 {
     char message[6];
 
-    int pulses = fan_pulses;
-    fan_pulses = 0;
+    int pulses = this->fan_pulses;
+    this->fan_pulses = 0;
 
     int elapsed_seconds = time_elapsed / 1000;
     int pulses_per_minute = pulses / elapsed_seconds * 60;
@@ -50,10 +50,10 @@ void PWMFan::update()
 
     snprintf(message, sizeof message, "%i", rpm);
 
-    events->notify_observers("speed", channel, message);
+    this->events->notify_observers("speed", channel, message);
 }
 
 void PWMFan::pickPulse()
 {
-    fan_pulses++;
+    this->fan_pulses++;
 }

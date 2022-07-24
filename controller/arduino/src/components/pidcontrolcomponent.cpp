@@ -16,17 +16,19 @@ PIDControlComponent::PIDControlComponent(
     this->input = input;
     this->output = output;
     this->automatic = true;
+    this->previous_input_timestamp = 0;
+    this->notemp = false;
 }
 
 void PIDControlComponent::setup()
 {
-    Kp = pid->GetKp();
-    Ki = pid->GetKi();
-    Kd = pid->GetKd();
-    pid->SetOutputLimits(0, 255);
-    pid->SetMode(AUTOMATIC);
+    this->Kp = pid->GetKp();
+    this->Ki = pid->GetKi();
+    this->Kd = pid->GetKd();
+    this->pid->SetOutputLimits(0, 255);
+    this->pid->SetMode(AUTOMATIC);
 
-    events->register_observer(this);
+    this->events->register_observer(this);
 }
 
 void PIDControlComponent::notify(const char *event, const uint8_t channel, const char *data)
@@ -34,6 +36,7 @@ void PIDControlComponent::notify(const char *event, const uint8_t channel, const
     if (strncmp(event, "temp", 4) == 0 && channel == this->channel)
     {
         *input = atof(data);
+        this->previous_input_timestamp = millis();
     }
     else if (strncmp(event, "target", 6) == 0 && channel == this->channel)
     {
@@ -41,30 +44,30 @@ void PIDControlComponent::notify(const char *event, const uint8_t channel, const
     }
     else if (strncmp(event, "kp", 2) == 0 && channel == this->channel)
     {
-        Kp = atof(data);
-        pid->SetTunings(Kp, Ki, Kd);
+        this->Kp = atof(data);
+        this->pid->SetTunings(this->Kp, this->Ki, this->Kd);
     }
     else if (strncmp(event, "ki", 2) == 0 && channel == this->channel)
     {
-        Ki = atof(data);
-        pid->SetTunings(Kp, Ki, Kd);
+        this->Ki = atof(data);
+        this->pid->SetTunings(this->Kp, this->Ki, this->Kd);
     }
     else if (strncmp(event, "kd", 2) == 0 && channel == this->channel)
     {
-        Kd = atof(data);
-        pid->SetTunings(Kp, Ki, Kd);
+        this->Kd = atof(data);
+        this->pid->SetTunings(this->Kp, this->Ki, this->Kd);
     }
     else if (strncmp(event, "mode", 4) == 0 && channel == this->channel)
     {
         if (strncmp(data, "0", 1) == 0)
         {
-            automatic = false;
-            pid->SetMode(0);
+            this->automatic = false;
+            this->pid->SetMode(0);
         }
         else
         {
-            automatic = true;
-            pid->SetMode(1);
+            this->automatic = true;
+            this->pid->SetMode(1);
         }
     }
 }
@@ -73,11 +76,28 @@ void PIDControlComponent::update()
 {
     char message[6];
 
-    pid->Compute();
+    this->pid->Compute();
     if (automatic)
     {
         dtostrf(*output, 1, 1, message);
-
-        events->notify_observers("output", channel, message);
+        if (millis() - this->previous_input_timestamp > 30000)
+        {
+            // Not receiving temperature measurements
+            this->events->notify_observers("output", channel, "255");
+            if (!this->notemp)
+            {
+                this->events->notify_observers("mode", channel, "2");
+                this->notemp = true;
+            }
+        }
+        else
+        {
+            this->events->notify_observers("output", channel, message);
+            if (this->notemp)
+            {
+                this->events->notify_observers("mode", channel, "1");
+                this->notemp = false;
+            }
+        }
     }
 }

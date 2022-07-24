@@ -79,22 +79,38 @@ void Display::notify(const char *event, const uint8_t channel, const char *data)
     {
         if (strncmp(data, "0", 1) == 0)
         {
-            printLeftString("MANUAL", 20, 176, COLORED, UNCOLORED);
+            printLeftString("Manual", 20, 176, COLORED, UNCOLORED);
+        }
+        else if (strncmp(data, "1", 1) == 0)
+        {
+            printLeftString("Auto", 20, 176, COLORED, UNCOLORED);
+        }
+        else if (strncmp(data, "2", 1) == 0)
+        {
+            printLeftString("NOTEMP", 20, 176, COLORED, UNCOLORED);
         }
         else
         {
-            printLeftString("Auto", 20, 176, COLORED, UNCOLORED);
+            printLeftString("ERROR", 20, 176, COLORED, UNCOLORED);
         }
     }
     else if (strncmp(event, "mode", 4) == 0 && channel == 2)
     {
         if (strncmp(data, "0", 1) == 0)
         {
-            printRightString("MANUAL", 20, 176, COLORED, UNCOLORED);
+            printRightString("Manual", 20, 176, COLORED, UNCOLORED);
+        }
+        else if (strncmp(data, "1", 1) == 0)
+        {
+            printRightString("Auto", 20, 176, COLORED, UNCOLORED);
+        }
+        else if (strncmp(data, "2", 1) == 0)
+        {
+            printRightString("NOTEMP", 20, 176, COLORED, UNCOLORED);
         }
         else
         {
-            printRightString("Auto", 20, 176, COLORED, UNCOLORED);
+            printRightString("ERROR", 20, 176, COLORED, UNCOLORED);
         }
     }
 }
