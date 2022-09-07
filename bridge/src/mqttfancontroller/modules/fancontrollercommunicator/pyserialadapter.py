@@ -30,9 +30,9 @@ class PyserialAdapter:
         rcvd_int = int.from_bytes(rcvd_bytes, "little")
         return rcvd_int
 
-    # def _read_int16(self):
-    #     received = self._read_uint16()
-    #     return received - 32768
+    def read_int16(self):
+        received = self.read_uint16()
+        return received - 32768
 
     def write_uint8(self, data: int):
         bytedata = data.to_bytes(1, "little")

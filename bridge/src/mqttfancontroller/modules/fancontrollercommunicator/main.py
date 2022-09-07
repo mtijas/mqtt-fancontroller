@@ -8,6 +8,13 @@ from time import sleep
 
 from mqttfancontroller.modules.fancontrollercommunicator.commands import (
     SetTargetCommand,
+    SetOutputCommand,
+    SetKPCommand,
+    SetKICommand,
+    SetKDCommand,
+    SetModeCommand,
+    GetStatusCommand,
+    GetSettingsCommand,
 )
 from mqttfancontroller.modules.fancontrollercommunicator.errors import (
     ErrorResponseError,
@@ -22,8 +29,6 @@ from mqttfancontroller.utils.component import BaseComponentABC
 
 
 class FanControllerCommunicator(BaseProcessABC, BaseComponentABC):
-    _send_queue: list
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.logger = logging.getLogger("mqttfancontroller.modules.serialcommunicator")
@@ -34,6 +39,13 @@ class FanControllerCommunicator(BaseProcessABC, BaseComponentABC):
         self.events.register_observer(self.config["command_topic"], self)
         self._commands = {
             "SET_TARGET": SetTargetCommand,
+            "SET_OUTPUT": SetOutputCommand,
+            "SET_KP": SetKPCommand,
+            "SET_KI": SetKICommand,
+            "SET_KD": SetKDCommand,
+            "SET_MODE": SetModeCommand,
+            "GET_STATUS": GetStatusCommand,
+            "GET_SETTINGS": GetSettingsCommand,
         }
 
     def update(self):
@@ -45,12 +57,17 @@ class FanControllerCommunicator(BaseProcessABC, BaseComponentABC):
 
         try:
             command_object.execute()
+            result = command_object.result
+            if result is not None:
+                self.publish_global_event(result["event"], result["data"])
         except OverflowError:
             self._send_queue.pop(0)
             return
         except UnexpectedResponseError:
             pass
         except ErrorResponseError:
+            pass
+        except ResponseTimeoutError:
             pass
         else:
             self._send_queue.pop(0)

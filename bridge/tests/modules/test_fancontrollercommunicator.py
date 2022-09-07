@@ -20,7 +20,7 @@ from src.mqttfancontroller.utils.component import BaseComponentABC
 from src.mqttfancontroller.utils.observable import Observable
 
 
-class FanControllerCommunicatorRawReadWriteTestCase(unittest.TestCase):
+class FanControllerCommunicatorTestCase(unittest.TestCase):
     def setUp(self):
         self.stop_event = Mock()
         self.sub_queue = Mock()
@@ -188,6 +188,34 @@ class FanControllerCommunicatorRawReadWriteTestCase(unittest.TestCase):
             ]
         )
 
+    def test_set_target_cut_to_one_decimal(self):
+        """SET_TARGET command should cut value to one decimal"""
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = FanControllerCommunicator(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            self.commands["RCVD"].to_bytes(1, "little"),
+        ]
+
+        comms.notify("dummy", {"command": "SET_TARGET", "channel": 1, "value": 422.56})
+        comms.update()
+
+        self.assertEqual(mock_serial.return_value.read.call_count, 2)
+        self.assertEqual(mock_serial.return_value.write.call_count, 4)
+        mock_serial.return_value.write.assert_has_calls(
+            [
+                mock.call(self.commands["HELLO"].to_bytes(1, "little")),
+                mock.call(self.commands["SET_TARGET"].to_bytes(1, "little")),
+                mock.call((1).to_bytes(1, "little")),
+                mock.call((4225).to_bytes(2, "little")),
+            ]
+        )
+
     def test_set_output(self):
         """SET_OUTPUT command should send HELLO, command and value to serial"""
         with mock.patch("serial.Serial") as mock_serial:
@@ -244,6 +272,34 @@ class FanControllerCommunicatorRawReadWriteTestCase(unittest.TestCase):
             ]
         )
 
+    def test_set_kp_value_cut_to_two_decimals(self):
+        """SET_KP command should cut value to 2 decimals"""
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = FanControllerCommunicator(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            self.commands["RCVD"].to_bytes(1, "little"),
+        ]
+
+        comms.notify("dummy", {"command": "SET_KP", "channel": 1, "value": 203.4298})
+        comms.update()
+
+        self.assertEqual(mock_serial.return_value.read.call_count, 2)
+        self.assertEqual(mock_serial.return_value.write.call_count, 4)
+        mock_serial.return_value.write.assert_has_calls(
+            [
+                mock.call(self.commands["HELLO"].to_bytes(1, "little")),
+                mock.call(self.commands["SET_KP"].to_bytes(1, "little")),
+                mock.call((1).to_bytes(1, "little")),
+                mock.call((20342).to_bytes(2, "little")),
+            ]
+        )
+
     def test_set_ki(self):
         """SET_KI command should send HELLO, command and value to serial"""
         with mock.patch("serial.Serial") as mock_serial:
@@ -269,6 +325,34 @@ class FanControllerCommunicatorRawReadWriteTestCase(unittest.TestCase):
                 mock.call(self.commands["SET_KI"].to_bytes(1, "little")),
                 mock.call((1).to_bytes(1, "little")),
                 mock.call((2042).to_bytes(2, "little")),
+            ]
+        )
+
+    def test_set_ki_value_cut_to_two_decimals(self):
+        """SET_KI command should cut value to 2 decimals"""
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = FanControllerCommunicator(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            self.commands["RCVD"].to_bytes(1, "little"),
+        ]
+
+        comms.notify("dummy", {"command": "SET_KI", "channel": 1, "value": 203.4298})
+        comms.update()
+
+        self.assertEqual(mock_serial.return_value.read.call_count, 2)
+        self.assertEqual(mock_serial.return_value.write.call_count, 4)
+        mock_serial.return_value.write.assert_has_calls(
+            [
+                mock.call(self.commands["HELLO"].to_bytes(1, "little")),
+                mock.call(self.commands["SET_KI"].to_bytes(1, "little")),
+                mock.call((1).to_bytes(1, "little")),
+                mock.call((20342).to_bytes(2, "little")),
             ]
         )
 
@@ -300,6 +384,34 @@ class FanControllerCommunicatorRawReadWriteTestCase(unittest.TestCase):
             ]
         )
 
+    def test_set_kd_value_cut_to_two_decimals(self):
+        """SET_KD command should cut value to 2 decimals"""
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = FanControllerCommunicator(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            self.commands["RCVD"].to_bytes(1, "little"),
+        ]
+
+        comms.notify("dummy", {"command": "SET_KD", "channel": 1, "value": 203.4298})
+        comms.update()
+
+        self.assertEqual(mock_serial.return_value.read.call_count, 2)
+        self.assertEqual(mock_serial.return_value.write.call_count, 4)
+        mock_serial.return_value.write.assert_has_calls(
+            [
+                mock.call(self.commands["HELLO"].to_bytes(1, "little")),
+                mock.call(self.commands["SET_KD"].to_bytes(1, "little")),
+                mock.call((1).to_bytes(1, "little")),
+                mock.call((20342).to_bytes(2, "little")),
+            ]
+        )
+
     def test_set_mode(self):
         """SET_MODE command should send HELLO, command and value to serial"""
         with mock.patch("serial.Serial") as mock_serial:
@@ -328,3 +440,132 @@ class FanControllerCommunicatorRawReadWriteTestCase(unittest.TestCase):
             ]
         )
 
+    def test_get_status_comms_with_bridge(self):
+        """GET_STATUS should send HELLO and command, expect 8 bytes and
+        respond with RCVD"""
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = FanControllerCommunicator(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            (300 + 32768).to_bytes(2, "little"),
+            (315 + 32768).to_bytes(2, "little"),
+            (7500 + 32768).to_bytes(2, "little"),
+            (42 + 32768).to_bytes(2, "little"),
+        ]
+
+        comms.notify("dummy", {"command": "GET_STATUS", "channel": 1})
+        comms.update()
+
+        self.assertEqual(mock_serial.return_value.read.call_count, 5)
+        self.assertEqual(mock_serial.return_value.write.call_count, 4)
+        mock_serial.return_value.write.assert_has_calls(
+            [
+                mock.call(self.commands["HELLO"].to_bytes(1, "little")),
+                mock.call(self.commands["GET_STATUS"].to_bytes(1, "little")),
+                mock.call((1).to_bytes(1, "little")),
+                mock.call(self.commands["RCVD"].to_bytes(1, "little")),
+            ]
+        )
+
+    def test_get_status_forwards_received_message_to_bus(self):
+        """GET_STATUS should forward received message to message bus"""
+        publish_mock = Mock()
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = FanControllerCommunicator(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            (300 + 32768).to_bytes(2, "little"),
+            (315 + 32768).to_bytes(2, "little"),
+            (7500 + 32768).to_bytes(2, "little"),
+            (42 + 32768).to_bytes(2, "little"),
+        ]
+        comms.publish_global_event = publish_mock
+
+        comms.notify("dummy", {"command": "GET_STATUS", "channel": 1})
+        comms.update()
+
+        publish_mock.assert_called_once_with(
+            "controller_status",
+            {
+                "channel": 1,
+                "temp": 30.0,
+                "target": 31.5,
+                "speed": 7500,
+                "output": 42,
+            },
+        )
+
+    def test_get_settings_comms_with_bridge(self):
+        """GET_SETTINGS should send HELLO and command, expect 8 bytes and
+        respond with RCVD"""
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = FanControllerCommunicator(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            (2).to_bytes(2, "little"),
+            (315).to_bytes(2, "little"),
+            (7500).to_bytes(2, "little"),
+            (42).to_bytes(2, "little"),
+        ]
+
+        comms.notify("dummy", {"command": "GET_SETTINGS", "channel": 1})
+        comms.update()
+
+        self.assertEqual(mock_serial.return_value.read.call_count, 5)
+        self.assertEqual(mock_serial.return_value.write.call_count, 4)
+        mock_serial.return_value.write.assert_has_calls(
+            [
+                mock.call(self.commands["HELLO"].to_bytes(1, "little")),
+                mock.call(self.commands["GET_SETTINGS"].to_bytes(1, "little")),
+                mock.call((1).to_bytes(1, "little")),
+                mock.call(self.commands["RCVD"].to_bytes(1, "little")),
+            ]
+        )
+
+    def test_get_settings_forwards_received_message_to_bus(self):
+        """GET_SETTINGS should forward received message to message bus"""
+        publish_mock = Mock()
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = FanControllerCommunicator(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            (2).to_bytes(2, "little"),
+            (315).to_bytes(2, "little"),
+            (7500).to_bytes(2, "little"),
+            (42).to_bytes(2, "little"),
+        ]
+        comms.publish_global_event = publish_mock
+
+        comms.notify("dummy", {"command": "GET_SETTINGS", "channel": 1})
+        comms.update()
+
+        publish_mock.assert_called_once_with(
+            "controller_settings",
+            {
+                "channel": 1,
+                "mode": 2,
+                "kp": 3.15,
+                "ki": 75.00,
+                "kd": 0.42,
+            },
+        )
