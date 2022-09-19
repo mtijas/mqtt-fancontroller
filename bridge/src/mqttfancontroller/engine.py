@@ -3,21 +3,13 @@
 
 
 import multiprocessing as mp
+from importlib import import_module
 from time import sleep
 
-from mqttfancontroller.modules.printstdoutput import PrintStdOutput
-from mqttfancontroller.modules.timeinput import TimestampInput
 from mqttfancontroller.utils.messagebroker import MessageBroker
-from mqttfancontroller.modules.mqtt import MQTTMessenger
 
 
 class Engine:
-    available_modules = {
-        "timestamp": TimestampInput,
-        "stdout": PrintStdOutput,
-        "mqtt": MQTTMessenger,
-    }
-
     def __init__(self, config, logger):
         self.config = config
         self.logger = logger
@@ -30,7 +22,22 @@ class Engine:
     def start(self):
         """Start the engine"""
         self.logger.info("Starting engine...")
-        self.init_needed_procs_from_config()
+        raw_modules_list = self.config["modules"].get(list)
+        for module in raw_modules_list:
+            actual_module = self._load_external_module(module["type"])
+            if not actual_module:
+                self.stop_event.set()
+                break
+            module_config = self._get_module_config(module)
+            (pub_q, sub_q) = self.broker.get_client_queues()
+            module_instance = actual_module.main(
+                config=module_config,
+                stop_event=self.stop_event,
+                pub_queue=pub_q,
+                sub_queue=sub_q,
+            )
+            self.needed_procs.append(module_instance)
+
         # Try to start all needed processes
         for target in self.needed_procs:
             process = mp.Process(target=target.start)
@@ -62,29 +69,26 @@ class Engine:
         self.stop_event.set()
         self.logger.debug("Stop event sent")
 
-    def init_needed_procs_from_config(self):
-        """Initialize needed processes from config"""
-        modules = self.config["modules"].get(list)
+    def _load_external_module(self, name):
+        """Import module from modules directory"""
+        full_name = f"mqttfancontroller.modules.{name.lower()}.main"
+        try:
+            imported_module = import_module(full_name)
+        except ImportError:
+            self.logger.critical(f"Module {full_name} could not be loaded.")
+            return None
+        return imported_module
 
-        for module in modules:
-            module_type = module["type"]
-            module_config = dict()
-            if module_type not in self.available_modules:
-                raise AttributeError(f"Module '{module}' is not installed.")
+    def _get_module_config(self, module) -> dict:
+        """Extracts module config from raw list item and augments it
+        with env variables"""
+        module_config = dict()
+        if "config" in module:
+            module_config = module["config"]
 
-            (pub_q, sub_q) = self.broker.get_client_queues()
-            if "config" in module:
-                module_config = module["config"]
+        if "env" in self.config:
+            if module["type"] in self.config["env"]:
+                for k, v in self.config["env"][module["type"]].items():
+                    module_config[k] = str(v)
 
-            if "env" in self.config:
-                if module_type in self.config["env"]:
-                    for k, v in self.config["env"][module_type].items():
-                        module_config[k] = str(v)
-
-            module_instance = self.available_modules[module_type](
-                config=module_config,
-                stop_event=self.stop_event,
-                pub_queue=pub_q,
-                sub_queue=sub_q,
-            )
-            self.needed_procs.append(module_instance)
+        return module_config

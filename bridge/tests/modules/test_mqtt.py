@@ -7,7 +7,7 @@ import unittest.mock as mock
 from unittest.mock import Mock
 import time
 
-from src.mqttfancontroller.modules.mqtt import MQTTMessenger
+from src.mqttfancontroller.modules.mqttmessenger.main import mqttmessenger
 from src.mqttfancontroller.utils.baseprocess import BaseProcessABC
 from src.mqttfancontroller.utils.component import BaseComponentABC
 from src.mqttfancontroller.utils.observable import Observable
@@ -35,7 +35,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, mock.patch(
             "mqttfancontroller.utils.baseprocess.Observable"
         ) as mock_events:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -52,7 +52,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, mock.patch(
             "mqttfancontroller.utils.baseprocess.Observable"
         ) as mock_events:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -70,7 +70,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         ) as mock_events, self.assertRaises(
             AttributeError, msg="publish_events list not found in config"
         ) as raised:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -86,7 +86,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         notify_event = "test-event"
         notify_data = {"This is": "test data"}
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -112,7 +112,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         notify_data = {"This is": "test data"}
         self.config["publish_events"] = {"test-event": "/target/topic"}
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -137,7 +137,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
             "test-event": ["/target/topic", "/target/topic2"],
         }
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -159,7 +159,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         notify_data = "test data"
         self.config["publish_events"] = {"test-event": "/target/topic"}
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -180,7 +180,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         notify_data = 1
         self.config["publish_events"] = {"test-event": "/target/topic"}
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -201,7 +201,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         notify_data = 3.1415
         self.config["publish_events"] = {"test-event": "/target/topic"}
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -225,7 +225,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         ) as mock_events, self.assertRaises(
             AttributeError, msg="subscribe_topics list not found in config"
         ) as raised:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -241,7 +241,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
             "/incoming/topic2",
         ]
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -260,7 +260,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, self.assertRaises(
             AttributeError, msg="host not found in config"
         ) as raised:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -272,7 +272,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         self.config["host"] = "foo.bar"
 
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -295,7 +295,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         self.config["bind_address"] = "1.2.3.4"
 
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -316,7 +316,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         self.config["host"] = "foo.bar"
 
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -345,7 +345,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         self.config["reconnect_interval"] = 1
 
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -376,7 +376,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, mock.patch(
             "mqttfancontroller.utils.baseprocess.Observable"
         ) as mock_events:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -404,7 +404,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, mock.patch(
             "mqttfancontroller.utils.baseprocess.Observable"
         ) as mock_events:
-            messenger = MQTTMessenger(
+            messenger = mqttmessenger(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -417,3 +417,4 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
             "/test/topic/subtopic", payload
         )
         self.assertEqual(self.pub_queue.put_nowait.call_count, 1)
+

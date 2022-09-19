@@ -6,7 +6,7 @@ from mqttfancontroller.utils.component import BaseComponentABC
 import time
 
 
-class TimestampInput(TimedBaseProcessABC, BaseComponentABC):
+class main(TimedBaseProcessABC, BaseComponentABC):
     def update(self):
         """Get the current unix timestamp"""
         self.logger.debug("TimestampInput update")

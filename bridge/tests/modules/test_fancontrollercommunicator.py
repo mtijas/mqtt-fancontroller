@@ -8,7 +8,7 @@ import unittest.mock as mock
 from unittest.mock import Mock
 
 from src.mqttfancontroller.modules.fancontrollercommunicator.main import (
-    FanControllerCommunicator,
+    fancontrollercommunicator,
 )
 from src.mqttfancontroller.modules.fancontrollercommunicator.errors import (
     ErrorResponseError,
@@ -52,7 +52,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
         with mock.patch("serial.Serial") as mock_serial, mock.patch(
             "mqttfancontroller.utils.baseprocess.Observable"
         ) as mock_events:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -69,7 +69,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_unexpected_response_to_hello_prevents_sending_further_data(self):
         """No data should be sent if HELLO fails"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -91,7 +91,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_sending_message_is_tried_three_times_if_hello_fails(self):
         """Sending message should be retried twice in case of errors"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -122,7 +122,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_failing_send_message_is_tried_three_times_total(self):
         """Sending message should be retried twice in case of errors, test 2"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -163,7 +163,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_set_target(self):
         """SET_TARGET command should send HELLO, command and value to serial"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -191,7 +191,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_set_target_cut_to_one_decimal(self):
         """SET_TARGET command should cut value to one decimal"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -219,7 +219,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_set_output(self):
         """SET_OUTPUT command should send HELLO, command and value to serial"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -247,7 +247,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_set_kp(self):
         """SET_KP command should send HELLO, command and value to serial"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -275,7 +275,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_set_kp_value_cut_to_two_decimals(self):
         """SET_KP command should cut value to 2 decimals"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -303,7 +303,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_set_ki(self):
         """SET_KI command should send HELLO, command and value to serial"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -331,7 +331,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_set_ki_value_cut_to_two_decimals(self):
         """SET_KI command should cut value to 2 decimals"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -359,7 +359,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_set_kd(self):
         """SET_KD command should send HELLO, command and value to serial"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -387,7 +387,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_set_kd_value_cut_to_two_decimals(self):
         """SET_KD command should cut value to 2 decimals"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -415,7 +415,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_set_mode(self):
         """SET_MODE command should send HELLO, command and value to serial"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -444,7 +444,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
         """GET_STATUS should send HELLO and command, expect 8 bytes and
         respond with RCVD"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -476,7 +476,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
         """GET_STATUS should forward received message to message bus"""
         publish_mock = Mock()
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -509,7 +509,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
         """GET_SETTINGS should send HELLO and command, expect 8 bytes and
         respond with RCVD"""
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,
@@ -541,7 +541,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
         """GET_SETTINGS should forward received message to message bus"""
         publish_mock = Mock()
         with mock.patch("serial.Serial") as mock_serial:
-            comms = FanControllerCommunicator(
+            comms = fancontrollercommunicator(
                 config=self.config,
                 stop_event=self.stop_event,
                 pub_queue=self.pub_queue,

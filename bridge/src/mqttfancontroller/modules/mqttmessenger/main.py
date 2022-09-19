@@ -12,7 +12,7 @@ from mqttfancontroller.utils.baseprocess import BaseProcessABC
 from mqttfancontroller.utils.component import BaseComponentABC
 
 
-class MQTTMessenger(BaseProcessABC, BaseComponentABC):
+class main(BaseProcessABC, BaseComponentABC):
     _client: mqtt.Client
     _connected: bool
     _queued_messages: list

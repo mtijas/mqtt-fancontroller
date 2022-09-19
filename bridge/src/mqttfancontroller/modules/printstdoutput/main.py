@@ -6,7 +6,7 @@ from mqttfancontroller.utils.component import BaseComponentABC
 import time
 
 
-class PrintStdOutput(BaseProcessABC, BaseComponentABC):
+class main(BaseProcessABC, BaseComponentABC):
     _messages: list = list()
 
     def __init__(self, **kwargs):

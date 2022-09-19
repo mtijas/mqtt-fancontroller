@@ -28,7 +28,7 @@ from mqttfancontroller.utils.baseprocess import BaseProcessABC
 from mqttfancontroller.utils.component import BaseComponentABC
 
 
-class FanControllerCommunicator(BaseProcessABC, BaseComponentABC):
+class main(BaseProcessABC, BaseComponentABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.logger = logging.getLogger("mqttfancontroller.modules.serialcommunicator")
