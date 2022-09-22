@@ -42,7 +42,7 @@ class AbstractCommand(ABC):
         """Executes the command"""
         self._tries += 1
 
-        self._serial_adapter.reset_serial_buffer()
+        self._serial_adapter.reset_both_buffers()
 
         # Initiate connection
         self._serial_adapter.write_uint8(self._command_values["HELLO"])
@@ -68,6 +68,9 @@ class AbstractCommand(ABC):
         """Gets the result of the command"""
         return self._result
 
+    def __str__(self) -> str:
+        return f"Command {self._command_id} for ch {self._channel}"
+
     def _run_command_specific_tasks(self):
         """Command-specific tasks. Override this in concrete implementations."""
         raise NotImplementedError()
@@ -75,6 +78,7 @@ class AbstractCommand(ABC):
 
 class BaseSetCommand(AbstractCommand):
     """Base SET command"""
+
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
         self._value = None
@@ -91,9 +95,13 @@ class BaseSetCommand(AbstractCommand):
     def set_value(self, value):
         self._value = int(value)
 
+    def __str__(self) -> str:
+        return f"SET Command {self._command_id} for ch {self._channel} with value {self._value}"
+
 
 class BaseGetCommand(AbstractCommand):
     """Base GET command"""
+
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
 
@@ -104,6 +112,9 @@ class BaseGetCommand(AbstractCommand):
         # Always respond with RCVD since this bridge should only forward
         # the data to MQTT broker.
         self._serial_adapter.write_uint8(self._command_values["RCVD"])
+
+    def __str__(self) -> str:
+        return f"GET Command {self._command_id} for ch {self._channel}"
 
 
 class SetTargetCommand(BaseSetCommand):
@@ -131,7 +142,6 @@ class SetOutputCommand(BaseSetCommand):
     def _run_command_specific_tasks(self):
         """Sends value and expects RCVD response"""
         self._serial_adapter.write_uint8(self._value)
-
 
 
 class SetKPCommand(BaseSetCommand):
@@ -177,7 +187,6 @@ class SetKDCommand(BaseSetCommand):
     def _run_command_specific_tasks(self):
         """Sends value and expects RCVD response"""
         self._serial_adapter.write_uint16(self._value)
-
 
 
 class SetModeCommand(BaseSetCommand):
@@ -258,4 +267,3 @@ class GetSettingsCommand(BaseGetCommand):
 
         response = self._serial_adapter.read_uint16()
         self._result["data"]["kd"] = response / 100
-

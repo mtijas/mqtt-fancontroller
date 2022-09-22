@@ -79,7 +79,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["ERROR"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_TARGET", "channel": 1, "value": 42})
+        comms.notify("dummy", '{"command": "SET_TARGET", "channel": 1, "value": 42}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 1)
@@ -105,7 +105,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["ERROR"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_TARGET", "channel": 1, "value": 42})
+        comms.notify("dummy", '{"command": "SET_TARGET", "channel": 1, "value": 42}')
         for i in range(5):
             comms.update()
 
@@ -137,7 +137,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["ERROR"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_TARGET", "channel": 1, "value": 42})
+        comms.notify("dummy", '{"command": "SET_TARGET", "channel": 1, "value": 42}')
         for i in range(5):
             comms.update()
 
@@ -160,6 +160,108 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             ]
         )
 
+    def test_unknown_error_on_command_results_global_fail_message(self):
+        """Failing all retries on send should result a global fail message"""
+        publish_mock = Mock()
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = main(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            self.commands["ERROR"].to_bytes(1, "little"),
+            self.commands["ACK"].to_bytes(1, "little"),
+            self.commands["ERROR"].to_bytes(1, "little"),
+            self.commands["ACK"].to_bytes(1, "little"),
+            self.commands["ERROR"].to_bytes(1, "little"),
+        ]
+
+        comms.publish_global_event = publish_mock
+        comms.notify("dummy", '{"command": "SET_TARGET", "channel": 1, "value": 42}')
+        for i in range(5):
+            comms.update()
+
+        self.assertEqual(mock_serial.return_value.read.call_count, 6)
+        self.assertEqual(mock_serial.return_value.write.call_count, 12)
+
+        publish_mock.assert_called_once_with(
+            "controller_command_results",
+            {
+                "type": "error",
+                "message": "Unexpected response",
+                "original_command": "SET Command 64 for ch 1 with value 420",
+            },
+        )
+
+    def test_error_on_hello_results_global_fail_message(self):
+        """3x ERROR on HELLO should result global fail message"""
+        publish_mock = Mock()
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = main(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ERROR"].to_bytes(1, "little"),
+            self.commands["ERROR"].to_bytes(1, "little"),
+            self.commands["ERROR"].to_bytes(1, "little"),
+        ]
+
+        comms.publish_global_event = publish_mock
+        comms.notify("dummy", '{"command": "SET_TARGET", "channel": 1, "value": 42}')
+        for i in range(5):
+            comms.update()
+
+        self.assertEqual(mock_serial.return_value.read.call_count, 3)
+        self.assertEqual(mock_serial.return_value.write.call_count, 3)
+
+        publish_mock.assert_called_once_with(
+            "controller_command_results",
+            {
+                "type": "error",
+                "message": "Unexpected return value on initialization",
+                "original_command": "SET Command 64 for ch 1 with value 420",
+            },
+        )
+
+    def test_response_timeout_results_global_fail_message(self):
+        """3x TIMEOUTS should result global fail message"""
+        publish_mock = Mock()
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = main(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        mock_serial.return_value.read.side_effect = [
+            b"",
+            b"",
+            b"",
+        ]
+
+        comms.publish_global_event = publish_mock
+        comms.notify("dummy", '{"command": "SET_TARGET", "channel": 1, "value": 42}')
+        for i in range(5):
+            comms.update()
+
+        self.assertEqual(mock_serial.return_value.read.call_count, 3)
+        self.assertEqual(mock_serial.return_value.write.call_count, 3)
+
+        publish_mock.assert_called_once_with(
+            "controller_command_results",
+            {
+                "type": "error",
+                "message": "Response timeout",
+                "original_command": "SET Command 64 for ch 1 with value 420",
+            },
+        )
+
     def test_set_target(self):
         """SET_TARGET command should send HELLO, command and value to serial"""
         with mock.patch("serial.Serial") as mock_serial:
@@ -174,7 +276,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_TARGET", "channel": 1, "value": 42})
+        comms.notify("dummy", '{"command": "SET_TARGET", "channel": 1, "value": 42}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -202,7 +304,9 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_TARGET", "channel": 1, "value": 422.56})
+        comms.notify(
+            "dummy", '{"command": "SET_TARGET", "channel": 1, "value": 422.56}'
+        )
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -230,7 +334,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_OUTPUT", "channel": 1, "value": 255})
+        comms.notify("dummy", '{"command": "SET_OUTPUT", "channel": 1, "value": 255}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -258,7 +362,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_KP", "channel": 1, "value": 20.42})
+        comms.notify("dummy", '{"command": "SET_KP", "channel": 1, "value": 20.42}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -286,7 +390,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_KP", "channel": 1, "value": 203.4298})
+        comms.notify("dummy", '{"command": "SET_KP", "channel": 1, "value": 203.4298}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -314,7 +418,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_KI", "channel": 1, "value": 20.42})
+        comms.notify("dummy", '{"command": "SET_KI", "channel": 1, "value": 20.42}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -342,7 +446,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_KI", "channel": 1, "value": 203.4298})
+        comms.notify("dummy", '{"command": "SET_KI", "channel": 1, "value": 203.4298}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -370,7 +474,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_KD", "channel": 1, "value": 20.42})
+        comms.notify("dummy", '{"command": "SET_KD", "channel": 1, "value": 20.42}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -398,7 +502,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_KD", "channel": 1, "value": 203.4298})
+        comms.notify("dummy", '{"command": "SET_KD", "channel": 1, "value": 203.4298}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -426,7 +530,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", {"command": "SET_MODE", "channel": 1, "value": 1})
+        comms.notify("dummy", '{"command": "SET_MODE", "channel": 1, "value": 1}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -458,7 +562,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             (42 + 32768).to_bytes(2, "little"),
         ]
 
-        comms.notify("dummy", {"command": "GET_STATUS", "channel": 1})
+        comms.notify("dummy", '{"command": "GET_STATUS", "channel": 1}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 5)
@@ -491,18 +595,30 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
         ]
         comms.publish_global_event = publish_mock
 
-        comms.notify("dummy", {"command": "GET_STATUS", "channel": 1})
+        comms.notify("dummy", '{"command": "GET_STATUS", "channel": 1}')
         comms.update()
 
-        publish_mock.assert_called_once_with(
-            "controller_status",
-            {
-                "channel": 1,
-                "temp": 30.0,
-                "target": 31.5,
-                "speed": 7500,
-                "output": 42,
-            },
+        publish_mock.assert_has_calls(
+            [
+                mock.call(
+                    "controller_status",
+                    {
+                        "channel": 1,
+                        "temp": 30.0,
+                        "target": 31.5,
+                        "speed": 7500,
+                        "output": 42,
+                    },
+                ),
+                mock.call(
+                    "controller_command_results",
+                    {
+                        "type": "success",
+                        "message": "OK",
+                        "original_command": "GET Command 70 for ch 1",
+                    },
+                ),
+            ]
         )
 
     def test_get_settings_comms_with_bridge(self):
@@ -523,7 +639,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             (42).to_bytes(2, "little"),
         ]
 
-        comms.notify("dummy", {"command": "GET_SETTINGS", "channel": 1})
+        comms.notify("dummy", '{"command": "GET_SETTINGS", "channel": 1}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 5)
@@ -556,16 +672,28 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
         ]
         comms.publish_global_event = publish_mock
 
-        comms.notify("dummy", {"command": "GET_SETTINGS", "channel": 1})
+        comms.notify("dummy", '{"command": "GET_SETTINGS", "channel": 1}')
         comms.update()
 
-        publish_mock.assert_called_once_with(
-            "controller_settings",
-            {
-                "channel": 1,
-                "mode": 2,
-                "kp": 3.15,
-                "ki": 75.00,
-                "kd": 0.42,
-            },
+        publish_mock.assert_has_calls(
+            [
+                mock.call(
+                    "controller_settings",
+                    {
+                        "channel": 1,
+                        "mode": 2,
+                        "kp": 3.15,
+                        "ki": 75.00,
+                        "kd": 0.42,
+                    },
+                ),
+                mock.call(
+                    "controller_command_results",
+                    {
+                        "type": "success",
+                        "message": "OK",
+                        "original_command": "GET Command 71 for ch 1",
+                    },
+                ),
+            ]
         )
