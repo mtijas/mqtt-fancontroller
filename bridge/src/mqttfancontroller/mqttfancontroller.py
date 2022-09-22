@@ -27,6 +27,8 @@ def main():
             logger.warning(f"Configuration error: {err}")
     config.set_env()
 
+    logger.debug(f'Initial config: {config}')
+
     engine = Engine(config, logger)
 
     try:

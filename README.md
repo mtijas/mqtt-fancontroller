@@ -1,7 +1,7 @@
 # mqtt-fancontroller
 
 A MQTT-enabled fan controller for controlling native PWM computer fans
-with Raspberry Pi's hardware PWM. Written in Python.
+with Arduino's hardware PWM. Written in Python and C++.
 
 ## Install
 
@@ -42,7 +42,18 @@ achieved by running `pip install -e .`.
 
 #### Running MQTTFanController inside the container
 
-The app may be started simply by running `mqttfancontroller`.
+Before starting the bridge a configuration file must be provided. An example
+config is provided as `config.yaml`. If your MQTT broker requires username
+and password to be provided, you may export them as environment variables
+inside the container before starting the application:
+
+```sh
+export MQTTFANCONTROLLER_MQTTMESSENGER__USERNAME=username
+export MQTTFANCONTROLLER_MQTTMESSENGER__PASSWORD=password
+```
+
+The app may be started simply by running `mqttfancontroller -c ./config.yaml`
+after providing necessary configurations.
 
 #### Running unit tests
 

@@ -23,6 +23,7 @@ class Engine:
         """Start the engine"""
         self.logger.info("Starting engine...")
         raw_modules_list = self.config["modules"].get(list)
+        self.logger.debug(f"Got modules config: {raw_modules_list}")
         for module in raw_modules_list:
             actual_module = self._load_external_module(module["type"])
             if not actual_module:
@@ -86,9 +87,9 @@ class Engine:
         if "config" in module:
             module_config = module["config"]
 
-        if "env" in self.config:
-            if module["type"] in self.config["env"]:
-                for k, v in self.config["env"][module["type"]].items():
-                    module_config[k] = str(v)
+        if module["type"] in self.config:
+            for k, v in self.config[module["type"]].items():
+                module_config[k] = str(v)
+                self.logger.debug(f"Imported config {k} with content {str(v)}")
 
         return module_config
