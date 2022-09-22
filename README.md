@@ -1,7 +1,7 @@
 # mqtt-fancontroller
 
-A MQTT-enabled fan controller for controlling native PWM computer fans
-with Arduino's hardware PWM. Written in Python and C++.
+A fan controller for controlling native PWM computer fans with Arduino's
+hardware PWM, and a MQTT bridge for external control. Written in Python and C++.
 
 ## Install
 
@@ -52,8 +52,8 @@ and password to be provided, you may export them as environment variables
 inside the container before starting the application:
 
 ```sh
-export MQTTFANCONTROLLER_MQTTMESSENGER__USERNAME=username
-export MQTTFANCONTROLLER_MQTTMESSENGER__PASSWORD=password
+export FANCONTROLBRIDGE_MQTTMESSENGER__USERNAME=username
+export FANCONTROLBRIDGE_MQTTMESSENGER__PASSWORD=password
 ```
 
 The app may be started simply by running `fancontrolbridge -c ./config.yaml`
