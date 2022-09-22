@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: 2022 Markus Ijäs
 # SPDX-License-Identifier: GPL-3.0-only
 
-from mqttfancontroller.utils.baseprocess import BaseProcessABC
-from mqttfancontroller.utils.component import BaseComponentABC
+from fancontrolbridge.utils.baseprocess import BaseProcessABC
+from fancontrolbridge.utils.component import BaseComponentABC
 import time
 
 

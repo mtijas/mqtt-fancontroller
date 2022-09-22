@@ -7,7 +7,7 @@ modules:
   - type: mqtt
     config:
       publish_events:
-        timestamp: mqttfancontroller/test/output
+        timestamp: fancontrolbridge/test/output
       subscribe_topics:
-        - mqttfancontroller/test/input
+        - fancontrolbridge/test/input
       host: mqtt.local.lan

@@ -7,17 +7,17 @@ import unittest
 import unittest.mock as mock
 from unittest.mock import Mock
 
-from src.mqttfancontroller.modules.fancontrollercommunicator.main import (
+from src.fancontrolbridge.modules.fancontrollercommunicator.main import (
     main,
 )
-from src.mqttfancontroller.modules.fancontrollercommunicator.errors import (
+from src.fancontrolbridge.modules.fancontrollercommunicator.errors import (
     ErrorResponseError,
     ResponseTimeoutError,
     UnexpectedResponseError,
 )
-from src.mqttfancontroller.utils.baseprocess import BaseProcessABC
-from src.mqttfancontroller.utils.component import BaseComponentABC
-from src.mqttfancontroller.utils.observable import Observable
+from src.fancontrolbridge.utils.baseprocess import BaseProcessABC
+from src.fancontrolbridge.utils.component import BaseComponentABC
+from src.fancontrolbridge.utils.observable import Observable
 
 
 class FanControllerCommunicatorTestCase(unittest.TestCase):
@@ -26,7 +26,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
         self.sub_queue = Mock()
         self.pub_queue = Mock()
         self.config = {
-            "command_topic": "mqttfancontroller/test/command",
+            "command_topic": "fancontrolbridge/test/command",
             "report_interval": 15,
             "port": "dummy",
             "bauds": 9600,
@@ -50,7 +50,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
     def test_serial_initialized_with_correct_config(self):
         """Serial lib should be initialized with values from config"""
         with mock.patch("serial.Serial") as mock_serial, mock.patch(
-            "mqttfancontroller.utils.baseprocess.Observable"
+            "fancontrolbridge.utils.baseprocess.Observable"
         ) as mock_events:
             comms = main(
                 config=self.config,

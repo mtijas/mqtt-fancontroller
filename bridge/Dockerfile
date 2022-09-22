@@ -2,15 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 FROM python:3.10-slim
-    WORKDIR /fancontroller
+    WORKDIR /bridge
 
-    RUN useradd -ms /bin/bash fancontroller
+    RUN useradd -ms /bin/bash bridge
+    RUN usermod -aG dialout bridge
     RUN pip install --upgrade pip setuptools wheel
 
-    RUN chown -R fancontroller:fancontroller /fancontroller
+    RUN chown -R bridge:bridge /bridge
 
-    USER fancontroller
+    USER bridge
 
-    ENV PATH="/home/fancontroller/.local/bin:$PATH"
+    ENV PATH="/home/bridge/.local/bin:$PATH"
 
     ENTRYPOINT ["/bin/bash"]

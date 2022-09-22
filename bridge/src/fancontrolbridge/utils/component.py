@@ -3,7 +3,7 @@
 
 from abc import ABC
 
-from mqttfancontroller.utils.observable import Observer
+from fancontrolbridge.utils.observable import Observer
 
 
 class BaseComponentABC(Observer):

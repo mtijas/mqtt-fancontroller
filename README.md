@@ -21,6 +21,10 @@ development environments for each developer. This is also to lessen the
 need for developers to install dependencies on their system (even though
 venvs exist).
 
+The port where the Arduino board resides must be provided as an environment
+variable (this is to pass the port to the Docker container).
+For example: `export ARDUINO_PORT=/dev/ttyACM0`.
+
 Build the container with: `docker-compose build [--no-cache]` and run with
 `docker-compose run dev`.
 
@@ -52,7 +56,7 @@ export MQTTFANCONTROLLER_MQTTMESSENGER__USERNAME=username
 export MQTTFANCONTROLLER_MQTTMESSENGER__PASSWORD=password
 ```
 
-The app may be started simply by running `mqttfancontroller -c ./config.yaml`
+The app may be started simply by running `fancontrolbridge -c ./config.yaml`
 after providing necessary configurations.
 
 #### Running unit tests

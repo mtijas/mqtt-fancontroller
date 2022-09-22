@@ -7,8 +7,8 @@ from abc import ABC, abstractmethod
 from multiprocessing import current_process
 from time import sleep
 
-from mqttfancontroller.utils.messagebroker import MessagingClient
-from mqttfancontroller.utils.observable import Observable, Observer
+from fancontrolbridge.utils.messagebroker import MessagingClient
+from fancontrolbridge.utils.observable import Observable, Observer
 
 
 class BaseProcessABC(ABC, MessagingClient):

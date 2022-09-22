@@ -3,12 +3,12 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mqttfancontroller"
+name = "fancontrolbridge"
 version = "0.0.1"
 authors = [
   { name="Markus Ijäs", email="markus.ijas@pm.me" },
 ]
-description = "A MQTT-enabled fan controller for controlling native PWM computer fans with Raspberry Pi's hardware PWM."
+description = "A MQTT-enabled bridge for the Arduino fan controller."
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
@@ -24,4 +24,4 @@ dependencies = ["confuse", "paho-mqtt", "pyserial"]
 "Bug Tracker" = "https://github.com/mtijas/mqtt-fancontroller/issues"
 
 [project.scripts]
-mqttfancontroller = "mqttfancontroller.mqttfancontroller:main"
+fancontrolbridge = "fancontrolbridge.fancontrolbridge:main"

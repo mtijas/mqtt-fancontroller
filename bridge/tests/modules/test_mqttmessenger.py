@@ -7,10 +7,10 @@ import unittest.mock as mock
 from unittest.mock import Mock
 import time
 
-from src.mqttfancontroller.modules.mqttmessenger.main import main
-from src.mqttfancontroller.utils.baseprocess import BaseProcessABC
-from src.mqttfancontroller.utils.component import BaseComponentABC
-from src.mqttfancontroller.utils.observable import Observable
+from src.fancontrolbridge.modules.mqttmessenger.main import main
+from src.fancontrolbridge.utils.baseprocess import BaseProcessABC
+from src.fancontrolbridge.utils.component import BaseComponentABC
+from src.fancontrolbridge.utils.observable import Observable
 
 
 class MQTTMessengerGenericTestCase(unittest.TestCase):
@@ -33,7 +33,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         }
 
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, mock.patch(
-            "mqttfancontroller.utils.baseprocess.Observable"
+            "fancontrolbridge.utils.baseprocess.Observable"
         ) as mock_events:
             messenger = main(
                 config=self.config,
@@ -50,7 +50,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         self.config["publish_events"] = []
 
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, mock.patch(
-            "mqttfancontroller.utils.baseprocess.Observable"
+            "fancontrolbridge.utils.baseprocess.Observable"
         ) as mock_events:
             messenger = main(
                 config=self.config,
@@ -66,7 +66,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         self.config.pop("publish_events")
 
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, mock.patch(
-            "mqttfancontroller.utils.baseprocess.Observable"
+            "fancontrolbridge.utils.baseprocess.Observable"
         ) as mock_events, self.assertRaises(
             AttributeError, msg="publish_events list not found in config"
         ) as raised:
@@ -101,7 +101,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         self.assertEqual(
             cm.output,
             [
-                "WARNING:mqttfancontroller.modules.mqtt:Event 'test-event' not found in MQTT config"
+                "WARNING:fancontrolbridge.modules.mqttmessenger:Event 'test-event' not found in MQTT config"
             ],
         )
         mock_mqtt.return_value.publish.assert_not_called()
@@ -221,7 +221,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         self.config.pop("subscribe_topics")
 
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, mock.patch(
-            "mqttfancontroller.utils.baseprocess.Observable"
+            "fancontrolbridge.utils.baseprocess.Observable"
         ) as mock_events, self.assertRaises(
             AttributeError, msg="subscribe_topics list not found in config"
         ) as raised:
@@ -374,7 +374,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         )
 
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, mock.patch(
-            "mqttfancontroller.utils.baseprocess.Observable"
+            "fancontrolbridge.utils.baseprocess.Observable"
         ) as mock_events:
             messenger = main(
                 config=self.config,
@@ -402,7 +402,7 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
         )
 
         with mock.patch("paho.mqtt.client.Client") as mock_mqtt, mock.patch(
-            "mqttfancontroller.utils.baseprocess.Observable"
+            "fancontrolbridge.utils.baseprocess.Observable"
         ) as mock_events:
             messenger = main(
                 config=self.config,

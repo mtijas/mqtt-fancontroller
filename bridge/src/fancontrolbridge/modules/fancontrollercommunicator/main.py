@@ -6,7 +6,7 @@ import logging
 import time
 from time import sleep
 
-from mqttfancontroller.modules.fancontrollercommunicator.commands import (
+from fancontrolbridge.modules.fancontrollercommunicator.commands import (
     SetTargetCommand,
     SetOutputCommand,
     SetKPCommand,
@@ -16,22 +16,22 @@ from mqttfancontroller.modules.fancontrollercommunicator.commands import (
     GetStatusCommand,
     GetSettingsCommand,
 )
-from mqttfancontroller.modules.fancontrollercommunicator.errors import (
+from fancontrolbridge.modules.fancontrollercommunicator.errors import (
     ErrorResponseError,
     ResponseTimeoutError,
     UnexpectedResponseError,
 )
-from mqttfancontroller.modules.fancontrollercommunicator.pyserialadapter import (
+from fancontrolbridge.modules.fancontrollercommunicator.pyserialadapter import (
     PyserialAdapter,
 )
-from mqttfancontroller.utils.baseprocess import BaseProcessABC
-from mqttfancontroller.utils.component import BaseComponentABC
+from fancontrolbridge.utils.baseprocess import BaseProcessABC
+from fancontrolbridge.utils.component import BaseComponentABC
 
 
 class main(BaseProcessABC, BaseComponentABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.logger = logging.getLogger("mqttfancontroller.modules.serialcommunicator")
+        self.logger = logging.getLogger("fancontrolbridge.modules.serialcommunicator")
         self._send_queue = list()
         self._serial_adapter = PyserialAdapter(
             self.config["port"], self.config["bauds"]

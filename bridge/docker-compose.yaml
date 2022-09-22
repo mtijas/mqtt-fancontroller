@@ -5,14 +5,13 @@ version: "3.5"
 
 services:
   dev:
-    image: fancontrollerdev
-    container_name: fancontrollerdev
+    image: bridgedev
+    container_name: bridgedev
     stdin_open: true
     tty: true
     build:
       context: .
+    devices:
+      - ${ARDUINO_PORT}:/dev/ttyACM0
     volumes:
-      - .:/fancontroller:z
-    environment:
-      - MQTTFANCONTROLLER_ENV__MQTT__USERNAME
-      - MQTTFANCONTROLLER_ENV__MQTT__PASSWORD
+      - .:/bridge:z

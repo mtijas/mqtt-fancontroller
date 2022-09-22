@@ -4,7 +4,7 @@
 import unittest
 from unittest.mock import Mock
 
-from src.mqttfancontroller.utils.observable import Observable
+from src.fancontrolbridge.utils.observable import Observable
 
 
 class TestObservable(unittest.TestCase):

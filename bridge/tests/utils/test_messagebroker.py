@@ -6,7 +6,7 @@ import unittest.mock as mock
 from multiprocessing import Event, Queue
 from unittest.mock import Mock
 
-from src.mqttfancontroller.utils.messagebroker import (
+from src.fancontrolbridge.utils.messagebroker import (
     Message,
     MessageBroker,
     MessagingClient,

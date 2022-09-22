@@ -8,8 +8,8 @@ from time import sleep
 
 import paho.mqtt.client as mqtt
 
-from mqttfancontroller.utils.baseprocess import BaseProcessABC
-from mqttfancontroller.utils.component import BaseComponentABC
+from fancontrolbridge.utils.baseprocess import BaseProcessABC
+from fancontrolbridge.utils.component import BaseComponentABC
 
 
 class main(BaseProcessABC, BaseComponentABC):
@@ -22,7 +22,7 @@ class main(BaseProcessABC, BaseComponentABC):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.logger = logging.getLogger("mqttfancontroller.modules.mqtt")
+        self.logger = logging.getLogger("fancontrolbridge.modules.mqttmessenger")
         self._client = mqtt.Client()
         self._connected = False
         self._reconnect_interval = 30

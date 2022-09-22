@@ -1,9 +1,9 @@
 from abc import ABC
 
-from mqttfancontroller.modules.fancontrollercommunicator.errors import (
+from fancontrolbridge.modules.fancontrollercommunicator.errors import (
     UnexpectedResponseError,
 )
-from mqttfancontroller.modules.fancontrollercommunicator.pyserialadapter import (
+from fancontrolbridge.modules.fancontrollercommunicator.pyserialadapter import (
     PyserialAdapter,
 )
 

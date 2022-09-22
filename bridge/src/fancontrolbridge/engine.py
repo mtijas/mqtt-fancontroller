@@ -6,7 +6,7 @@ import multiprocessing as mp
 from importlib import import_module
 from time import sleep
 
-from mqttfancontroller.utils.messagebroker import MessageBroker
+from fancontrolbridge.utils.messagebroker import MessageBroker
 
 
 class Engine:
@@ -72,7 +72,7 @@ class Engine:
 
     def _load_external_module(self, name):
         """Import module from modules directory"""
-        full_name = f"mqttfancontroller.modules.{name.lower()}.main"
+        full_name = f"fancontrolbridge.modules.{name.lower()}.main"
         try:
             imported_module = import_module(full_name)
         except ImportError:

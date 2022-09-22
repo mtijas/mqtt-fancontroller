@@ -7,7 +7,7 @@ import argparse
 import logging
 import confuse
 
-from mqttfancontroller.engine import Engine
+from fancontrolbridge.engine import Engine
 
 
 def main():
@@ -19,7 +19,7 @@ def main():
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-    config = confuse.Configuration("mqttfancontroller", __name__)
+    config = confuse.Configuration("fancontrolbridge", __name__)
     if args.config is not None:
         try:
             config.set_file(args.config)
@@ -45,7 +45,7 @@ def setup_logging():
     """Setup global logging
     Returns logger instance
     """
-    logger = logging.getLogger("mqttfancontroller")
+    logger = logging.getLogger("fancontrolbridge")
     logger.setLevel(logging.WARNING)
 
     handler = logging.StreamHandler()
