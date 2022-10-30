@@ -20,15 +20,15 @@ The Bridge expects commands to be sent as JSON objects.
 For *setting* a parameter of the Controller, the command object should
 contain *command*, *channel* and *value*:
 
-```json
-{"command": "command_name_string", "channel": channel_id, "value": value_to_set}
+```
+{"command": <command_name_string>, "channel": <channel_id>, "value": <value_to_set>}
 ```
 
 And for getting status and settings reports from the Controller, leave the
 value out of the command JSON:
 
-```json
-{"command": "command_name_string", "channel": channel_id}
+```
+{"command": <command_name_string>, "channel": <channel_id>}
 ```
 
 The command names are fixed, and the channel may currently be 1 or 2.
