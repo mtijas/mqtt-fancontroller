@@ -8,7 +8,7 @@ hardware PWM, and a MQTT bridge for external control. Written in Python and C++.
 ### Description
 
 The bridge acts as a middleman between a MQTT server and the Arduino-based
-controller (connected via a serial port [USB] to the bridge). The bridge subscribes
+PID fan controller (connected via a serial port [USB] to the bridge). The bridge subscribes
 to a command topic described in the config, and forwards the commands received in
 that topic to the Controller via a serial port. The responses from the
 Controller will be forwarded to the topics also described in the config.
@@ -31,16 +31,8 @@ value out of the command JSON:
 {"command": <command_name_string>, "channel": <channel_id>}
 ```
 
-The command names are fixed, and the channel may currently be 1 or 2.
-
-"SET_TARGET": 64,
-            "SET_OUTPUT": 65,
-            "SET_KP": 66,
-            "SET_KI": 67,
-            "SET_KD": 68,
-            "SET_MODE": 69,
-            "GET_STATUS": 70,
-            "GET_SETTINGS": 71,
+The command names are fixed, and the channel may currently be 1 or 2 (though the
+channel is not restricted by the bridge).
 
 #### SET_TARGET
 
@@ -48,7 +40,7 @@ The Command `SET_TARGET` sets a new target temperature for a channel.
 The target temperature will be **cut** to one decimal (Example: 23.56 -> 23.5).
 Use a period as decimal separator.
 
-For example setting target temperature of 42.5 C to channel 1:
+Example of setting target temperature to 42.5 C on channel 1:
 
 ```json
 {"command": "SET_TARGET", "channel": 1, "value": 42.5}
@@ -56,31 +48,124 @@ For example setting target temperature of 42.5 C to channel 1:
 
 #### SET_KP
 
+The command `SET_KP` sets the P control term of the PID
+controller for a channel. The value will be **cut** to two decimals.
 
+Example of setting P to 10.42 on channel 1:
+
+```json
+{"command": "SET_KP", "channel": 1, "value": 10.42}
+```
 
 #### SET_KI
 
+The command `SET_KI` sets the I control term of the PID
+controller for a channel. The value will be **cut** to two decimals.
 
+Example of setting I to 5.2 on channel 1:
+
+```json
+{"command": "SET_KI", "channel": 1, "value": 5.2}
+```
 
 #### SET_KD
 
+The command `SET_KD` sets the D control term of the PID
+controller for a channel. The value will be **cut** to two decimals.
 
+Example of setting D to 0.37 on channel 1:
+
+```json
+{"command": "SET_KD", "channel": 1, "value": 0.37}
+```
 
 #### SET_MODE
 
+The command `SET_MODE` sets the output drive mode of a channel.
+There are two possible modes to set (*note: three possible modes on the
+Controller itself*):
 
+- 0: Manual drive by setting the output with `SET_OUTPUT`.
+- 1: Automatic PID-controlled drive.
+
+Example of setting the drive mode to *manual* on channel 2:
+
+```json
+{"command": "SET_MODE", "channel": 2, "value": 0}
+```
+
+**Note:** The output speed should be explicitly set, with another command,
+after setting the drive mode to manual. See the command below for setting speed
+manually.
 
 #### SET_OUTPUT
 
+The command `SET_OUTPUT` sets the output speed for a channel.
+The speed should be between 0-255, where 0 means the lowest possible
+speed a fan can go, and 255 the fastest speed. Only integers should be sent.
 
+Example of setting the speed to 128 (50 %) on channel 2:
+
+```json
+{"command": "SET_OUTPUT", "channel": 2, "value": 128}
+```
+
+**Note:** The output speed will not be set unless the drive mode is set
+to manual.
 
 #### GET_STATUS
 
+The command `GET_STATUS` requests the Controller for current status (channel,
+current temperature, target temperature, fan speed and raw output).
 
+Example of getting the status of channel 2:
+
+```json
+{"command": "GET_STATUS", "channel": 2}
+```
+
+The status will be sent to the `controller_status` topic described in the
+config file. It looks like this:
+
+```json
+{
+  "channel": 2,
+  "temp": 0,
+  "target": 30,
+  "speed": 0,
+  "output": 255
+}
+```
 
 #### GET_SETTINGS
 
+The command `GET_SETTINGS` requests the Controller for current settings (channel,
+mode, P, I and D tuning terms).
 
+Example of getting the settings of channel 2:
+
+```json
+{"command": "GET_SETTINGS", "channel": 2}
+```
+
+The settings will be sent to the `controller_settings` topic described in the
+config file. It looks like this:
+
+```json
+{
+  "channel": 2,
+  "mode": 0,
+  "kp": 4,
+  "ki": 0.4,
+  "kd": 2
+}
+```
+
+**Note:** There are three possible modes for the Controller to be in:
+
+- 0: Manual drive
+- 1: Automatic drive
+- 2: Forced FULL SPEED (usually caused by error reading temperature sensor)
 
 
 ### Installation
