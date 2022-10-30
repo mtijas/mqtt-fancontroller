@@ -21,14 +21,14 @@ For *setting* a parameter of the Controller, the command object should
 contain *command*, *channel* and *value*:
 
 ```json
-{"command": <command_name_string>, "channel": <channel_id>, "value": <value_to_set>}
+{"command": "command_name_string", "channel": channel_id, "value": value_to_set}
 ```
 
 And for getting status and settings reports from the Controller, leave the
 value out of the command JSON:
 
 ```json
-{"command": <command_name_string>, "channel": <channel_id>}
+{"command": "command_name_string", "channel": channel_id}
 ```
 
 The command names are fixed, and the channel may currently be 1 or 2.
@@ -46,7 +46,7 @@ The command names are fixed, and the channel may currently be 1 or 2.
 
 The Command `SET_TARGET` sets a new target temperature for a channel.
 The target temperature will be **cut** to one decimal (Example: 23.56 -> 23.5).
-Use a period (`.`) as decimal separator.
+Use a period as decimal separator.
 
 For example setting target temperature of 42.5 C to channel 1:
 
