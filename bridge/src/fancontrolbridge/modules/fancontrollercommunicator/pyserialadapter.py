@@ -1,6 +1,6 @@
 import serial
 from fancontrolbridge.modules.fancontrollercommunicator.errors import (
-    ResponseTimeoutError,
+    ResponseTimeoutError, WriteTimeoutError
 )
 
 
@@ -10,7 +10,7 @@ class PyserialAdapter:
     _serial: serial.Serial
 
     def __init__(self, port: str, bauds: int):
-        self._serial = serial.Serial(port, bauds, timeout=5)
+        self._serial = serial.Serial(port, bauds, timeout=5, write_timeout=5)
 
     def read_uint8(self):
         rcvd_bytes = self._serial.read()
@@ -34,11 +34,17 @@ class PyserialAdapter:
 
     def write_uint8(self, data: int):
         bytedata = data.to_bytes(1, "little")
-        self._serial.write(bytedata)
+        try:
+            self._serial.write(bytedata)
+        except serial.SerialTimeoutException as e:
+            raise WriteTimeoutError("Write timeout")
 
     def write_uint16(self, data: int):
         bytedata = data.to_bytes(2, "little")
-        self._serial.write(bytedata)
+        try:
+            self._serial.write(bytedata)
+        except serial.SerialTimeoutException as e:
+            raise WriteTimeoutError("Write timeout")
 
     def reset_both_buffers(self):
         self._serial.reset_input_buffer()

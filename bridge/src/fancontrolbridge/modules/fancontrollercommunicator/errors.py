@@ -14,3 +14,8 @@ class ResponseTimeoutError(Exception):
     """Bridge did not respond"""
 
     pass
+
+class WriteTimeoutError(Exception):
+    """Timeout while writing data to the Controller"""
+
+    pass

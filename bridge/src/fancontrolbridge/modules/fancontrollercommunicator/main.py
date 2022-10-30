@@ -3,8 +3,6 @@
 
 import json
 import logging
-import time
-from time import sleep
 
 from fancontrolbridge.modules.fancontrollercommunicator.commands import (
     SetTargetCommand,
@@ -20,6 +18,7 @@ from fancontrolbridge.modules.fancontrollercommunicator.errors import (
     ErrorResponseError,
     ResponseTimeoutError,
     UnexpectedResponseError,
+    WriteTimeoutError,
 )
 from fancontrolbridge.modules.fancontrollercommunicator.pyserialadapter import (
     PyserialAdapter,
@@ -31,7 +30,8 @@ from fancontrolbridge.utils.component import BaseComponentABC
 class main(BaseProcessABC, BaseComponentABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.logger = logging.getLogger("fancontrolbridge.modules.serialcommunicator")
+        self.logger = logging.getLogger(
+            "fancontrolbridge.modules.serialcommunicator")
         self._send_queue = list()
         self._serial_adapter = PyserialAdapter(
             self.config["port"], self.config["bauds"]
@@ -54,44 +54,38 @@ class main(BaseProcessABC, BaseComponentABC):
             return
 
         message = "OK"
+        success = False
+        remove_command = False
 
         command_object = self._send_queue[0]
 
         try:
+            self.logger.debug(f"Executing: {command_object}")
             command_object.execute()
+            self.logger.debug(f"Execution finished for {command_object}")
             result = command_object.result
             if result is not None:
                 self.publish_global_event(result["event"], result["data"])
-        except OverflowError:
-            self._send_queue.pop(0)
-            return
-        except UnexpectedResponseError as e:
+        except (OverflowError, TypeError, AttributeError) as e:
+            remove_command = True
             message = str(e)
-            pass
-        except ErrorResponseError as e:
+        except (UnexpectedResponseError, ErrorResponseError, ResponseTimeoutError, WriteTimeoutError) as e:
             message = str(e)
-            pass
-        except ResponseTimeoutError as e:
-            message = str(e)
-            pass
         else:
-            self._send_queue.pop(0)
-            self.publish_global_event(
-                "controller_command_results",
-                {
-                    "type": "success",
-                    "message": message,
-                    "original_command": str(command_object),
-                },
-            )
-            return
+            success = True
+            remove_command = True
 
         if command_object.tries >= 3:
+            self.logger.warning(
+                f"Command execution failed too many times: {command_object}")
+            remove_command = True
+
+        if remove_command:
             self._send_queue.pop(0)
             self.publish_global_event(
                 "controller_command_results",
                 {
-                    "type": "error",
+                    "type": "success" if success else "error",
                     "message": message,
                     "original_command": str(command_object),
                 },
@@ -104,6 +98,7 @@ class main(BaseProcessABC, BaseComponentABC):
         Might also contain "value" (mandatory for SET_* commands, not used
         in GET_* commands)
         """
+        command_object = None
         try:
             data_dict = json.loads(data)
             if "command" not in data or "channel" not in data_dict:
@@ -126,6 +121,18 @@ class main(BaseProcessABC, BaseComponentABC):
                 ]:
                     command_object.set_value(data_dict["value"])
 
+                self.logger.debug("Message seems ok. Appending to queue.")
                 self._send_queue.append(command_object)
         except ValueError:
-            self.logger.debug(f"Data is not a dictionary.")
+            self.logger.debug(
+                f"Data is not a dictionary. ValueError in main.notify.")
+        except (OverflowError, AttributeError, TypeError) as e:
+            self.logger.debug(f"Error in main.notify: {e}")
+            self.publish_global_event(
+                "controller_command_results",
+                {
+                    "type": "error",
+                    "message": str(e),
+                    "original_command": f"{data_dict['command']} / {data_dict['channel']}",
+                },
+            )

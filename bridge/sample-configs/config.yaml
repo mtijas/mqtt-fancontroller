@@ -1,0 +1,15 @@
+modules:
+  - type: mqttmessenger
+    config:
+      publish_events:
+        controller_status: fancontrolbridge/test/status
+        controller_settings: fancontrolbridge/test/settings
+        controller_command_results: fancontrolbridge/test/command-results
+      subscribe_topics:
+        - fancontrolbridge/test/commands
+      host: mqtt.local.lan
+  - type: fancontrollercommunicator
+    config:
+      port: /dev/ttyACM0
+      bauds: 9600
+      command_topic: fancontrolbridge/test/commands

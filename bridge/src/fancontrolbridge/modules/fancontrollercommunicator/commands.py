@@ -18,7 +18,7 @@ class AbstractCommand(ABC):
         self._serial_adapter = serial_adapter
 
         self._serial_adapter: PyserialAdapter
-        self._command_id = 0
+        self._command_name = None
         self._channel = 0
         self._tries = 0
         self._result = None
@@ -50,12 +50,16 @@ class AbstractCommand(ABC):
             raise UnexpectedResponseError("Unexpected return value on initialization")
 
         # Send command and channel
-        self._serial_adapter.write_uint8(self._command_id)
+        self._serial_adapter.write_uint8(self._command_values[self._command_name])
         self._serial_adapter.write_uint8(self._channel)
 
         self._run_command_specific_tasks()
 
     def set_channel(self, channel: int):
+        if type(channel) is not int:
+            raise TypeError("Channel should be an integer")
+        if channel < 1 or channel > 2:
+            raise OverflowError("Channel should be 1 or 2")
         self._channel = channel
 
     @property
@@ -69,7 +73,7 @@ class AbstractCommand(ABC):
         return self._result
 
     def __str__(self) -> str:
-        return f"Command {self._command_id} for ch {self._channel}"
+        return f"{self._command_name} / {self._channel}"
 
     def _run_command_specific_tasks(self):
         """Command-specific tasks. Override this in concrete implementations."""
@@ -93,10 +97,12 @@ class BaseSetCommand(AbstractCommand):
             raise UnexpectedResponseError("Unexpected response")
 
     def set_value(self, value):
+        if type(value) is not int:
+            raise TypeError("Value should be an integer")
         self._value = int(value)
 
     def __str__(self) -> str:
-        return f"SET Command {self._command_id} for ch {self._channel} with value {self._value}"
+        return f"{self._command_name} / {self._channel} / {self._value}"
 
 
 class BaseGetCommand(AbstractCommand):
@@ -114,7 +120,7 @@ class BaseGetCommand(AbstractCommand):
         self._serial_adapter.write_uint8(self._command_values["RCVD"])
 
     def __str__(self) -> str:
-        return f"GET Command {self._command_id} for ch {self._channel}"
+        return f"{self._command_name} / {self._channel}"
 
 
 class SetTargetCommand(BaseSetCommand):
@@ -122,9 +128,16 @@ class SetTargetCommand(BaseSetCommand):
 
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
-        self._command_id = self._command_values["SET_TARGET"]
+        self._command_name = "SET_TARGET"
 
     def set_value(self, value: int):
+        if type(value) is not int and type(value) is not float:
+            raise TypeError(
+                f"Value should be an integer or a float. Got {type(value)} instead."
+            )
+        if value < 0 or value > 6553.5:
+            raise OverflowError("Target temp should be between 0 and 6553.5")
+
         self._value = int(value * 10)
 
     def _run_command_specific_tasks(self):
@@ -137,7 +150,17 @@ class SetOutputCommand(BaseSetCommand):
 
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
-        self._command_id = self._command_values["SET_OUTPUT"]
+        self._command_name = "SET_OUTPUT"
+
+    def set_value(self, value: int):
+        if type(value) is not int:
+            raise TypeError(
+                f"Value should be an integer. Got {type(value)} instead."
+            )
+        if value < 0 or value > 255:
+            raise OverflowError("Output speed should be between 0 and 255")
+
+        self._value = value
 
     def _run_command_specific_tasks(self):
         """Sends value and expects RCVD response"""
@@ -149,9 +172,11 @@ class SetKPCommand(BaseSetCommand):
 
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
-        self._command_id = self._command_values["SET_KP"]
+        self._command_name = "SET_KP"
 
     def set_value(self, value: int):
+        if type(value) is not int and type(value) is not float:
+            raise TypeError("Value should be an integer or a float")
         self._value = int(value * 100)
 
     def _run_command_specific_tasks(self):
@@ -164,9 +189,11 @@ class SetKICommand(BaseSetCommand):
 
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
-        self._command_id = self._command_values["SET_KI"]
+        self._command_name = "SET_KI"
 
     def set_value(self, value: int):
+        if type(value) is not int and type(value) is not float:
+            raise TypeError("Value should be an integer or a float")
         self._value = int(value * 100)
 
     def _run_command_specific_tasks(self):
@@ -179,9 +206,11 @@ class SetKDCommand(BaseSetCommand):
 
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
-        self._command_id = self._command_values["SET_KD"]
+        self._command_name = "SET_KD"
 
     def set_value(self, value: int):
+        if type(value) is not int and type(value) is not float:
+            raise TypeError("Value should be an integer or a float")
         self._value = int(value * 100)
 
     def _run_command_specific_tasks(self):
@@ -194,7 +223,7 @@ class SetModeCommand(BaseSetCommand):
 
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
-        self._command_id = self._command_values["SET_MODE"]
+        self._command_name = "SET_MODE"
 
     def _run_command_specific_tasks(self):
         """Sends value and expects RCVD response"""
@@ -206,7 +235,7 @@ class GetStatusCommand(BaseGetCommand):
 
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
-        self._command_id = self._command_values["GET_STATUS"]
+        self._command_name = "GET_STATUS"
         self._result = {
             "event": "controller_status",
             "data": {
@@ -240,7 +269,7 @@ class GetSettingsCommand(BaseGetCommand):
 
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
-        self._command_id = self._command_values["GET_SETTINGS"]
+        self._command_name = "GET_SETTINGS"
         self._result = {
             "event": "controller_settings",
             "data": {

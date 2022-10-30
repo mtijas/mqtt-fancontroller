@@ -60,7 +60,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             )
 
         mock_serial.assert_called_once_with(
-            self.config["port"], self.config["bauds"], timeout=5
+            self.config["port"], self.config["bauds"], timeout=5, write_timeout=5
         )
         mock_events.return_value.register_observer.assert_called_once_with(
             self.config["command_topic"], comms
@@ -192,7 +192,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             {
                 "type": "error",
                 "message": "Unexpected response",
-                "original_command": "SET Command 64 for ch 1 with value 420",
+                "original_command": "SET_TARGET / 1 / 420",
             },
         )
 
@@ -225,7 +225,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             {
                 "type": "error",
                 "message": "Unexpected return value on initialization",
-                "original_command": "SET Command 64 for ch 1 with value 420",
+                "original_command": "SET_TARGET / 1 / 420",
             },
         )
 
@@ -258,7 +258,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             {
                 "type": "error",
                 "message": "Response timeout",
-                "original_command": "SET Command 64 for ch 1 with value 420",
+                "original_command": "SET_TARGET / 1 / 420",
             },
         )
 
@@ -615,7 +615,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
                     {
                         "type": "success",
                         "message": "OK",
-                        "original_command": "GET Command 70 for ch 1",
+                        "original_command": "GET_STATUS / 1",
                     },
                 ),
             ]
@@ -692,7 +692,169 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
                     {
                         "type": "success",
                         "message": "OK",
-                        "original_command": "GET Command 71 for ch 1",
+                        "original_command": "GET_SETTINGS / 1",
+                    },
+                ),
+            ]
+        )
+
+    def test_non_int_channel_results_error_message_to_bus(self):
+        """Non-int channel results in error message to bus, not sending
+        anything to controller"""
+        publish_mock = Mock()
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = main(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        comms.publish_global_event = publish_mock
+
+        comms.notify("dummy", '{"command": "GET_SETTINGS", "channel": "one"}')
+        comms.update()
+
+        mock_serial.return_value.write.assert_not_called()
+        publish_mock.assert_has_calls(
+            [
+                mock.call(
+                    "controller_command_results",
+                    {
+                        "type": "error",
+                        "message": "Channel should be an integer",
+                        "original_command": "GET_SETTINGS / one",
+                    },
+                ),
+            ]
+        )
+
+    def test_non_int_value_results_error_message_to_bus(self):
+        """Non-int value results in error message to bus, not sending
+        anything to controller"""
+        publish_mock = Mock()
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = main(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        comms.publish_global_event = publish_mock
+
+        comms.notify("dummy", '{"command": "SET_TARGET", "channel": 1, "value": "val"}')
+        comms.update()
+
+        mock_serial.return_value.write.assert_not_called()
+        publish_mock.assert_has_calls(
+            [
+                mock.call(
+                    "controller_command_results",
+                    {
+                        "type": "error",
+                        "message": "Value should be an integer or a float. Got <class 'str'> instead.",
+                        "original_command": "SET_TARGET / 1",
+                    },
+                ),
+            ]
+        )
+
+    def test_too_big_target_results_error_message_to_bus(self):
+        """Too big target value results in error message to bus, not sending
+        anything to controller"""
+        publish_mock = Mock()
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = main(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        comms.publish_global_event = publish_mock
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            self.commands["RCVD"].to_bytes(1, "little"),
+        ]
+
+        comms.notify("dummy", '{"command": "SET_TARGET", "channel": 1, "value": 6553.6}')
+        comms.update()
+
+        mock_serial.return_value.write.assert_not_called()
+        publish_mock.assert_has_calls(
+            [
+                mock.call(
+                    "controller_command_results",
+                    {
+                        "type": "error",
+                        "message": "Target temp should be between 0 and 6553.5",
+                        "original_command": "SET_TARGET / 1",
+                    },
+                ),
+            ]
+        )
+
+    def test_too_big_output_results_error_message_to_bus(self):
+        """Too big output value results in error message to bus, not sending
+        anything to controller"""
+        publish_mock = Mock()
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = main(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        comms.publish_global_event = publish_mock
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            self.commands["RCVD"].to_bytes(1, "little"),
+        ]
+
+        comms.notify("dummy", '{"command": "SET_OUTPUT", "channel": 1, "value": 256}')
+        comms.update()
+
+        mock_serial.return_value.write.assert_not_called()
+        publish_mock.assert_has_calls(
+            [
+                mock.call(
+                    "controller_command_results",
+                    {
+                        "type": "error",
+                        "message": "Output speed should be between 0 and 255",
+                        "original_command": "SET_OUTPUT / 1",
+                    },
+                ),
+            ]
+        )
+
+    def test_too_big_channel_results_error_message_to_bus(self):
+        """Too big channel results in error message to bus, not sending
+        anything to controller"""
+        publish_mock = Mock()
+        with mock.patch("serial.Serial") as mock_serial:
+            comms = main(
+                config=self.config,
+                stop_event=self.stop_event,
+                pub_queue=self.pub_queue,
+                sub_queue=self.sub_queue,
+            )
+        comms.publish_global_event = publish_mock
+        mock_serial.return_value.read.side_effect = [
+            self.commands["ACK"].to_bytes(1, "little"),
+            self.commands["RCVD"].to_bytes(1, "little"),
+        ]
+
+        comms.notify("dummy", '{"command": "SET_TARGET", "channel": 999999, "value": 999999}')
+        comms.update()
+
+        mock_serial.return_value.write.assert_not_called()
+        publish_mock.assert_has_calls(
+            [
+                mock.call(
+                    "controller_command_results",
+                    {
+                        "type": "error",
+                        "message": "Channel should be 1 or 2",
+                        "original_command": "SET_TARGET / 999999",
                     },
                 ),
             ]

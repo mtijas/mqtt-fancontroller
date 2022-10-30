@@ -31,8 +31,7 @@ value out of the command JSON:
 {"command": <command_name_string>, "channel": <channel_id>}
 ```
 
-The command names are fixed, and the channel may currently be 1 or 2 (though the
-channel is not restricted by the bridge).
+The command names are fixed, and the channel may currently be 1 or 2.
 
 #### SET_TARGET
 
@@ -206,7 +205,7 @@ modules:
 ##### `publish_events` and `subscribe_topics`
 
 The configuration file allows setting command topic which the Bridge
-will then listen for the commands, and the topics to which the responses
+will then listen to for the commands, and the topics to which the responses
 from the Controller should be forwarded to.
 
 Command topic config example:
@@ -259,7 +258,24 @@ export FANCONTROLBRIDGE_MQTTMESSENGER__USERNAME=username
 export FANCONTROLBRIDGE_MQTTMESSENGER__PASSWORD=password
 ```
 
-####
+#### The FanControllerCommunicator config
+
+##### port
+
+The port in which the Controller is connected. Sometimes `/dev/ttyACM0`.
+
+##### bauds
+
+Communication speed of the Controller. Usually `9600`.
+
+##### command_topic
+
+The MQTT topic on which the commands get delivered to the Bridge. **Should
+match** one of the `subscribe_topics` on MQTTMessenger configuration. This allows
+us to develop additional MQTT-listening functionality which are necessarily
+not Controller Command topics.
+
+In the example config: `command_topic: fancontrolbridge/commands`.
 
 
 ### Running
