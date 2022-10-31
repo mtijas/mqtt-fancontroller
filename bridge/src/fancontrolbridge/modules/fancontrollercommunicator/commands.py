@@ -21,7 +21,8 @@ class AbstractCommand(ABC):
         self._command_name = None
         self._channel = 0
         self._tries = 0
-        self._result = None
+        self._event_suffix = None
+        self._result_data = {}
         self._command_values = {
             "HELLO": 1,
             "ACK": 2,
@@ -68,9 +69,16 @@ class AbstractCommand(ABC):
         return self._tries
 
     @property
-    def result(self) -> dict:
-        """Gets the result of the command"""
-        return self._result
+    def result_data(self) -> dict:
+        """Gets the result data of the command"""
+        return self._result_data
+
+    @property
+    def result_event(self) -> dict:
+        """Gets the result event of the command"""
+        if self._event_suffix is None:
+            return None
+        return f"channel_{self._channel}_{self._event_suffix}"
 
     def __str__(self) -> str:
         return f"{self._command_name} / {self._channel}"
@@ -236,32 +244,21 @@ class GetStatusCommand(BaseGetCommand):
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
         self._command_name = "GET_STATUS"
-        self._result = {
-            "event": "controller_status",
-            "data": {
-                "channel": None,
-                "temp": None,
-                "target": None,
-                "speed": None,
-                "output": None,
-            },
-        }
+        self._event_suffix = "status"
 
     def _run_command_specific_tasks(self):
         """Gets four 2-byte values as _data"""
-        self._result["data"]["channel"] = self._channel
+        response = self._serial_adapter.read_int16()
+        self._result_data["temp"] = response / 10
 
         response = self._serial_adapter.read_int16()
-        self._result["data"]["temp"] = response / 10
+        self._result_data["target"] = response / 10
 
         response = self._serial_adapter.read_int16()
-        self._result["data"]["target"] = response / 10
+        self._result_data["speed"] = response
 
         response = self._serial_adapter.read_int16()
-        self._result["data"]["speed"] = response
-
-        response = self._serial_adapter.read_int16()
-        self._result["data"]["output"] = response
+        self._result_data["output"] = response
 
 
 class GetSettingsCommand(BaseGetCommand):
@@ -270,29 +267,18 @@ class GetSettingsCommand(BaseGetCommand):
     def __init__(self, serial_adapter: PyserialAdapter):
         super().__init__(serial_adapter)
         self._command_name = "GET_SETTINGS"
-        self._result = {
-            "event": "controller_settings",
-            "data": {
-                "channel": None,
-                "mode": None,
-                "kp": None,
-                "ki": None,
-                "kd": None,
-            },
-        }
+        self._event_suffix = "settings"
 
     def _run_command_specific_tasks(self):
         """Gets four 2-byte values as _data"""
-        self._result["data"]["channel"] = self._channel
+        response = self._serial_adapter.read_uint16()
+        self._result_data["mode"] = response
 
         response = self._serial_adapter.read_uint16()
-        self._result["data"]["mode"] = response
+        self._result_data["kp"] = response / 100
 
         response = self._serial_adapter.read_uint16()
-        self._result["data"]["kp"] = response / 100
+        self._result_data["ki"] = response / 100
 
         response = self._serial_adapter.read_uint16()
-        self._result["data"]["ki"] = response / 100
-
-        response = self._serial_adapter.read_uint16()
-        self._result["data"]["kd"] = response / 100
+        self._result_data["kd"] = response / 100

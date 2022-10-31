@@ -2,8 +2,10 @@ modules:
   - type: mqttmessenger
     config:
       publish_events:
-        controller_status: fancontrolbridge/test/status
-        controller_settings: fancontrolbridge/test/settings
+        channel_1_status: fancontrolbridge/test/ch1/status
+        channel_2_status: fancontrolbridge/test/ch2/status
+        channel_1_settings: fancontrolbridge/test/ch1/settings
+        channel_2_settings: fancontrolbridge/test/ch2/settings
         controller_command_results: fancontrolbridge/test/command-results
       subscribe_topics:
         - fancontrolbridge/test/commands

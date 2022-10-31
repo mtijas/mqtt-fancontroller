@@ -63,9 +63,8 @@ class main(BaseProcessABC, BaseComponentABC):
             self.logger.debug(f"Executing: {command_object}")
             command_object.execute()
             self.logger.debug(f"Execution finished for {command_object}")
-            result = command_object.result
-            if result is not None:
-                self.publish_global_event(result["event"], result["data"])
+            if command_object.result_event is not None:
+                self.publish_global_event(command_object.result_event, command_object.result_data)
         except (OverflowError, TypeError, AttributeError) as e:
             remove_command = True
             message = str(e)

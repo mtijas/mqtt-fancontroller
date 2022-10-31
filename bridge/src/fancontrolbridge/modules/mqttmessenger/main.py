@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: 2022 Markus Ijäs
 # SPDX-License-Identifier: GPL-3.0-only
 
+from enum import Enum
 import json
 import logging
 import time
-from time import sleep
 
 import paho.mqtt.client as mqtt
 
@@ -12,22 +12,29 @@ from fancontrolbridge.utils.baseprocess import BaseProcessABC
 from fancontrolbridge.utils.component import BaseComponentABC
 
 
+class Status(Enum):
+    DISCONNECTED = 0
+    CONNECTING = 1
+    CONNECTED = 2
+
+
 class main(BaseProcessABC, BaseComponentABC):
     _client: mqtt.Client
-    _connected: bool
     _queued_messages: list
     _reconnect_interval: int
     _time_since_last_connection_attempt: float
     _previous_connection_attempt_at: float
+    _connect_tries_count: int
+    _status: Status
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.logger = logging.getLogger("fancontrolbridge.modules.mqttmessenger")
         self._client = mqtt.Client()
-        self._connected = False
         self._reconnect_interval = 30
-        self._time_since_last_connect_call = 0.0
-        self._previous_update_call_at = 0.0
+        self._previous_connect_call_at = 0.0
+        self._connect_tries_count = 0
+        self._status = Status.DISCONNECTED
 
         if "host" not in self.config:
             raise AttributeError("host not found in config")
@@ -50,14 +57,13 @@ class main(BaseProcessABC, BaseComponentABC):
 
     def update(self):
         """Process loop"""
-        if self._connected:
+        if self._status != Status.CONNECTED and self._has_reconnect_interval_passed():
+            self._client.disconnect()
+            self._client.loop(timeout=2)
+            self._connect()
+
+        if self._status != Status.DISCONNECTED:
             self._client.loop(timeout=0.1)
-        else:
-            self._time_since_last_connect_call += self._get_time_since_last_update()
-            if self._time_since_last_connect_call >= self._reconnect_interval:
-                self._time_since_last_connect_call = 0
-                self._connect()
-                self._client.loop(timeout=1)
 
     def notify(self, event, data):
         """Publishes event data to MQTT topic.
@@ -85,7 +91,7 @@ class main(BaseProcessABC, BaseComponentABC):
 
     def stop(self):
         """Ensure messages get delivered before stopping"""
-        if not self._connected:
+        if self._status == Status.DISCONNECTED:
             # Assume everything is OK if already disconnected
             super().stop()
             return
@@ -99,12 +105,13 @@ class main(BaseProcessABC, BaseComponentABC):
     def on_connect(self, client, userdata, flags, rc):
         """On connect callback"""
         self.logger.debug("Connected to broker")
-        self._connected = True
+        self._connect_tries_count = 0
+        self._status = Status.CONNECTED
         self._subscribe_to_topics()
 
     def on_disconnect(self, client, userdata, rc):
         """On disconnect callback"""
-        self._connected = False
+        self._status = Status.DISCONNECTED
         if rc == 0:
             self.logger.debug(f"Expected disconnect successful.")
         else:
@@ -118,7 +125,9 @@ class main(BaseProcessABC, BaseComponentABC):
     def _connect(self):
         """Try to establish connection to MQTT broker"""
         self.logger.debug(f"Connecting to broker {self.config['host']}")
-        self._previous_update_call_at = time.monotonic()
+        self._previous_connect_call_at = time.monotonic()
+        self._status = Status.CONNECTING
+        self._connect_tries_count += 1
         port = 1883
         keepalive = 60
         bind_address = ""
@@ -151,9 +160,7 @@ class main(BaseProcessABC, BaseComponentABC):
             self.logger.debug(f"Subscribing to topic {topic}")
             self._client.subscribe(topic)
 
-    def _get_time_since_last_update(self):
-        """Returns time elapsed since last update"""
-        current_m = time.monotonic()
-        elapsed = current_m - self._previous_update_call_at
-        self._previous_update_call_at = current_m
-        return elapsed
+    def _has_reconnect_interval_passed(self):
+        """Returns true if enough time has passed from previous connect"""
+        time_since_last_connect = time.monotonic() - self._previous_connect_call_at
+        return time_since_last_connect > self._reconnect_interval

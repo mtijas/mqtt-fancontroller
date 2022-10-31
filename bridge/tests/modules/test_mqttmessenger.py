@@ -311,35 +311,6 @@ class MQTTMessengerGenericTestCase(unittest.TestCase):
             self.config["bind_address"],
         )
 
-    def test_loop_not_called_frequently_after_on_disconnect_callback(self):
-        """Loop should not get called too frequently after on_disconnect callback"""
-        self.config["host"] = "foo.bar"
-
-        with mock.patch("paho.mqtt.client.Client") as mock_mqtt:
-            messenger = main(
-                config=self.config,
-                stop_event=self.stop_event,
-                pub_queue=self.pub_queue,
-                sub_queue=self.sub_queue,
-            )
-
-        messenger.on_connect(mock_mqtt, None, {}, 0)  # Success
-        for i in range(3):
-            messenger.update()
-
-        self.assertEqual(mock_mqtt.return_value.loop.call_count, 3)
-
-        messenger.on_disconnect(mock_mqtt, None, 0)  # Clean disconnect
-
-        elapsed = 0.0
-        start_time = time.monotonic()
-        while elapsed < 0.5:
-            messenger.update()
-            elapsed = time.monotonic() - start_time
-            time.sleep(0.1)
-
-        self.assertEqual(mock_mqtt.return_value.loop.call_count, 4)
-
     def test_reconnect_interval(self):
         """Reconnect interval should be configurable and working"""
         self.config["reconnect_interval"] = 1

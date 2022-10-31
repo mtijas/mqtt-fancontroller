@@ -601,9 +601,8 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
         publish_mock.assert_has_calls(
             [
                 mock.call(
-                    "controller_status",
+                    "channel_1_status",
                     {
-                        "channel": 1,
                         "temp": 30.0,
                         "target": 31.5,
                         "speed": 7500,
@@ -678,9 +677,8 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
         publish_mock.assert_has_calls(
             [
                 mock.call(
-                    "controller_settings",
+                    "channel_1_settings",
                     {
-                        "channel": 1,
                         "mode": 2,
                         "kp": 3.15,
                         "ki": 75.00,

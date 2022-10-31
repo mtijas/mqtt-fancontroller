@@ -123,12 +123,11 @@ Example of getting the status of channel 2:
 {"command": "GET_STATUS", "channel": 2}
 ```
 
-The status will be sent to the `controller_status` topic described in the
+The status will be sent to the `channel_<number>_status` topic described in the
 config file. It looks like this:
 
 ```json
 {
-  "channel": 2,
   "temp": 0,
   "target": 30,
   "speed": 0,
@@ -147,12 +146,11 @@ Example of getting the settings of channel 2:
 {"command": "GET_SETTINGS", "channel": 2}
 ```
 
-The settings will be sent to the `controller_settings` topic described in the
+The settings will be sent to the `channel_<number>_settings` topic described in the
 config file. It looks like this:
 
 ```json
 {
-  "channel": 2,
   "mode": 0,
   "kp": 4,
   "ki": 0.4,
@@ -187,8 +185,10 @@ modules:
   - type: mqttmessenger
     config:
       publish_events:
-        controller_status: fancontrolbridge/status
-        controller_settings: fancontrolbridge/settings
+        channel_1_status: fancontrolbridge/test/ch1/status
+        channel_2_status: fancontrolbridge/test/ch2/status
+        channel_1_settings: fancontrolbridge/test/ch1/settings
+        channel_2_settings: fancontrolbridge/test/ch2/settings
         controller_command_results: fancontrolbridge/command-results
       subscribe_topics:
         - fancontrolbridge/commands
@@ -219,8 +219,10 @@ Response publish topics config example:
 
 ```yaml
 publish_events:
-  controller_status: fancontrolbridge/status
-  controller_settings: fancontrolbridge/settings
+  channel_1_status: fancontrolbridge/test/ch1/status
+  channel_2_status: fancontrolbridge/test/ch2/status
+  channel_1_settings: fancontrolbridge/test/ch1/settings
+  channel_2_settings: fancontrolbridge/test/ch2/settings
   controller_command_results: fancontrolbridge/command-results
 ```
 
@@ -230,7 +232,7 @@ and the results of sending the commands to the Controller commands will be forwa
 to the `controller_command_results` topic.
 
 The responses from the Controller for `GET` commands will be forwarded to the topics
-`controller_status` (for status report commands) and `controller_settings`
+`channel_<number>_status` (for status report commands) and `channel_<number>_settings`
 (for getting the current settings).
 
 **To recap:**
@@ -239,10 +241,10 @@ The responses from the Controller for `GET` commands will be forwarded to the to
 received from the command topics.
   - Listen to this to determine if any command got successfully forwarded.
 
-- Sending `GET_STATUS` command results in a response to `controller_status`
+- Sending `GET_STATUS` command results in a response to `channel_<number>_status`
 topic containing current status (temps, rpm and output) of one channel on the Controller.
 
-- Sending `GET_SETTINGS` command results in a response to `controller_settings`
+- Sending `GET_SETTINGS` command results in a response to `channel_<number>_settings`
 topic containing current settings (mode and PID parameters) of one channel on the Controller.
 
 ##### Setting the MQTT broker host, username and password
