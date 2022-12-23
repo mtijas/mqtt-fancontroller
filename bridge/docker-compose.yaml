@@ -9,6 +9,8 @@ services:
     container_name: bridgedev
     stdin_open: true
     tty: true
+    env_file:
+      - .env
     build:
       context: .
     devices:

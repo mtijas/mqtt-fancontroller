@@ -146,7 +146,7 @@ class SetTargetCommand(BaseSetCommand):
         if value < 0 or value > 6553.5:
             raise OverflowError("Target temp should be between 0 and 6553.5")
 
-        self._value = int(value * 10)
+        self._value = int(round(value, 1) * 10)
 
     def _run_command_specific_tasks(self):
         """Sends value and expects RCVD response"""
@@ -185,7 +185,7 @@ class SetKPCommand(BaseSetCommand):
     def set_value(self, value: int):
         if type(value) is not int and type(value) is not float:
             raise TypeError("Value should be an integer or a float")
-        self._value = int(value * 100)
+        self._value = round(value * 100)
 
     def _run_command_specific_tasks(self):
         """Sends value and expects RCVD response"""
@@ -202,7 +202,7 @@ class SetKICommand(BaseSetCommand):
     def set_value(self, value: int):
         if type(value) is not int and type(value) is not float:
             raise TypeError("Value should be an integer or a float")
-        self._value = int(value * 100)
+        self._value = round(value * 100)
 
     def _run_command_specific_tasks(self):
         """Sends value and expects RCVD response"""
@@ -219,7 +219,7 @@ class SetKDCommand(BaseSetCommand):
     def set_value(self, value: int):
         if type(value) is not int and type(value) is not float:
             raise TypeError("Value should be an integer or a float")
-        self._value = int(value * 100)
+        self._value = round(value * 100)
 
     def _run_command_specific_tasks(self):
         """Sends value and expects RCVD response"""

@@ -260,6 +260,8 @@ export FANCONTROLBRIDGE_MQTTMESSENGER__USERNAME=username
 export FANCONTROLBRIDGE_MQTTMESSENGER__PASSWORD=password
 ```
 
+You may also provide these via a `.env` file as is expected in the `docker-compose.yaml` file.
+
 #### The FanControllerCommunicator config
 
 ##### port

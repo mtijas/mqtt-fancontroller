@@ -290,8 +290,8 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             ]
         )
 
-    def test_set_target_cut_to_one_decimal(self):
-        """SET_TARGET command should cut value to one decimal"""
+    def test_set_target_rounded_to_one_decimal(self):
+        """SET_TARGET command should rounded value to one decimal"""
         with mock.patch("serial.Serial") as mock_serial:
             comms = main(
                 config=self.config,
@@ -316,7 +316,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
                 mock.call(self.commands["HELLO"].to_bytes(1, "little")),
                 mock.call(self.commands["SET_TARGET"].to_bytes(1, "little")),
                 mock.call((1).to_bytes(1, "little")),
-                mock.call((4225).to_bytes(2, "little")),
+                mock.call((4226).to_bytes(2, "little")),
             ]
         )
 
@@ -362,7 +362,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", '{"command": "SET_KP", "channel": 1, "value": 20.42}')
+        comms.notify("dummy", '{"command": "SET_KP", "channel": 1, "value": 4.1}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -372,12 +372,12 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
                 mock.call(self.commands["HELLO"].to_bytes(1, "little")),
                 mock.call(self.commands["SET_KP"].to_bytes(1, "little")),
                 mock.call((1).to_bytes(1, "little")),
-                mock.call((2042).to_bytes(2, "little")),
+                mock.call((410).to_bytes(2, "little")),
             ]
         )
 
-    def test_set_kp_value_cut_to_two_decimals(self):
-        """SET_KP command should cut value to 2 decimals"""
+    def test_set_kp_value_rounded_to_two_decimals(self):
+        """SET_KP command should rounded value to 2 decimals"""
         with mock.patch("serial.Serial") as mock_serial:
             comms = main(
                 config=self.config,
@@ -400,7 +400,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
                 mock.call(self.commands["HELLO"].to_bytes(1, "little")),
                 mock.call(self.commands["SET_KP"].to_bytes(1, "little")),
                 mock.call((1).to_bytes(1, "little")),
-                mock.call((20342).to_bytes(2, "little")),
+                mock.call((20343).to_bytes(2, "little")),
             ]
         )
 
@@ -432,8 +432,8 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             ]
         )
 
-    def test_set_ki_value_cut_to_two_decimals(self):
-        """SET_KI command should cut value to 2 decimals"""
+    def test_set_ki_value_rounded_to_two_decimals(self):
+        """SET_KI command should rounded value to 2 decimals"""
         with mock.patch("serial.Serial") as mock_serial:
             comms = main(
                 config=self.config,
@@ -446,7 +446,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             self.commands["RCVD"].to_bytes(1, "little"),
         ]
 
-        comms.notify("dummy", '{"command": "SET_KI", "channel": 1, "value": 203.4298}')
+        comms.notify("dummy", '{"command": "SET_KI", "channel": 1, "value": 203.4198}')
         comms.update()
 
         self.assertEqual(mock_serial.return_value.read.call_count, 2)
@@ -488,8 +488,8 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
             ]
         )
 
-    def test_set_kd_value_cut_to_two_decimals(self):
-        """SET_KD command should cut value to 2 decimals"""
+    def test_set_kd_value_rounded_to_two_decimals(self):
+        """SET_KD command should rounded value to 2 decimals"""
         with mock.patch("serial.Serial") as mock_serial:
             comms = main(
                 config=self.config,
@@ -512,7 +512,7 @@ class FanControllerCommunicatorTestCase(unittest.TestCase):
                 mock.call(self.commands["HELLO"].to_bytes(1, "little")),
                 mock.call(self.commands["SET_KD"].to_bytes(1, "little")),
                 mock.call((1).to_bytes(1, "little")),
-                mock.call((20342).to_bytes(2, "little")),
+                mock.call((20343).to_bytes(2, "little")),
             ]
         )
 
