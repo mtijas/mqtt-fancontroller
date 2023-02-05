@@ -47,17 +47,20 @@ class main(BaseProcessABC, BaseComponentABC):
             password = None
             if "password" in self.config:
                 password = self.config["password"]
+            self.logger.debug(f"Set MQTT credentials: {username} and {password}")
             self._client.username_pw_set(username, password)
 
         self._client.on_connect = self.on_connect
         self._client.on_disconnect = self.on_disconnect
         self._client.on_message = self.on_message
+        self._client.on_subscribe = self.on_subscribe
 
         self._register_publish_events()
 
     def update(self):
         """Process loop"""
         if self._status != Status.CONNECTED and self._has_reconnect_interval_passed():
+            self.logger.debug("Reconnecting...")
             self._client.disconnect()
             self._client.loop(timeout=2)
             self._connect()
@@ -96,15 +99,19 @@ class main(BaseProcessABC, BaseComponentABC):
             super().stop()
             return
 
-        self.logger.debug("Running extended stop loop...")
-        print("Stopping MQTT, please wait...")
+        self.logger.info("Stopping MQTT, please wait...")
         self._client.loop(timeout=5)
         self._client.disconnect()
         super().stop()
 
     def on_connect(self, client, userdata, flags, rc):
         """On connect callback"""
-        self.logger.debug("Connected to broker")
+        if (rc > 0):
+            self.logger.warning(f"Connection error {rc}")
+            self._status = Status.DISCONNECTED
+            return
+
+        self.logger.debug(f"Connected to broker with status {rc}")
         self._connect_tries_count = 0
         self._status = Status.CONNECTED
         self._subscribe_to_topics()
@@ -121,6 +128,9 @@ class main(BaseProcessABC, BaseComponentABC):
         """On message callback"""
         self.publish_global_event(message.topic, message.payload.decode())
 
+    def on_subscribe(self, client, userdata, mid, granted_qos):
+        """On subscrive callback"""
+        self.logger.debug(f"Subscribed with mid {mid}")
 
     def _connect(self):
         """Try to establish connection to MQTT broker"""
