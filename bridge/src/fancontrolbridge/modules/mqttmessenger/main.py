@@ -1,13 +1,13 @@
 # SPDX-FileCopyrightText: 2022 Markus Ijäs
 # SPDX-License-Identifier: GPL-3.0-only
 
-from enum import Enum
 import json
 import logging
 import time
+from enum import Enum
+import socket
 
 import paho.mqtt.client as mqtt
-
 from fancontrolbridge.utils.baseprocess import BaseProcessABC
 from fancontrolbridge.utils.component import BaseComponentABC
 
@@ -29,7 +29,8 @@ class main(BaseProcessABC, BaseComponentABC):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.logger = logging.getLogger("fancontrolbridge.modules.mqttmessenger")
+        self.logger = logging.getLogger(
+            "fancontrolbridge.modules.mqttmessenger")
         self._client = mqtt.Client()
         self._reconnect_interval = 30
         self._previous_connect_call_at = 0.0
@@ -47,7 +48,8 @@ class main(BaseProcessABC, BaseComponentABC):
             password = None
             if "password" in self.config:
                 password = self.config["password"]
-            self.logger.debug(f"Set MQTT credentials: {username} and {password}")
+            self.logger.debug(
+                f"Set MQTT credentials: {username} and {password}")
             self._client.username_pw_set(username, password)
 
         self._client.on_connect = self.on_connect
@@ -149,9 +151,13 @@ class main(BaseProcessABC, BaseComponentABC):
         if "bind_address" in self.config:
             bind_address = self.config["bind_address"]
 
-        self._client.connect(
-            self.config["host"], port, keepalive, bind_address
-        )
+        try:
+            self._client.connect(
+                self.config["host"], port, keepalive, bind_address
+            )
+        except socket.error as e:
+            self.logger.critical(f"Client exception {e}")
+            self._status = Status.DISCONNECTED
 
     def _register_publish_events(self):
         """Register Observers from config"""
