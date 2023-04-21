@@ -1,6 +1,6 @@
 #include "pwmfan.hpp"
 
-#define PULSES_PER_REVOLUTION 2
+#define PULSES_PER_REVOLUTION 2.0
 
 PWMFan::PWMFan(
     Observable *events,
@@ -44,9 +44,9 @@ void PWMFan::update()
     int pulses = this->fan_pulses;
     this->fan_pulses = 0;
 
-    int elapsed_seconds = time_elapsed / 1000;
-    int pulses_per_minute = pulses / elapsed_seconds * 60;
-    int rpm = pulses_per_minute / PULSES_PER_REVOLUTION;
+    double elapsed_seconds = time_elapsed / 1000.0;
+    double pulses_per_minute = pulses / elapsed_seconds * 60;
+    int rpm = int(pulses_per_minute / PULSES_PER_REVOLUTION);
 
     snprintf(message, sizeof message, "%i", rpm);
 
