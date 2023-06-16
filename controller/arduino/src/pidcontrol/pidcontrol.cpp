@@ -1,17 +1,15 @@
-#include "pidcontrolcomponent.hpp"
+#include "pidcontrol.hpp"
 
-PIDControlComponent::PIDControlComponent(
+PIDControl::PIDControl(
     Observable *events,
     PID *pid,
     int update_interval,
-    const uint8_t channel,
     double *input,
     double *output,
     double *setpoint)
     : TimedComponent(events, update_interval)
 {
     this->pid = pid;
-    this->channel = channel;
     this->setpoint = setpoint;
     this->input = input;
     this->output = output;
@@ -20,46 +18,46 @@ PIDControlComponent::PIDControlComponent(
     this->notemp = false;
 }
 
-void PIDControlComponent::setup()
+void PIDControl::setup()
 {
-    this->Kp = pid->GetKp();
-    this->Ki = pid->GetKi();
-    this->Kd = pid->GetKd();
+    this->Kp = this->pid->GetKp();
+    this->Ki = this->pid->GetKi();
+    this->Kd = this->pid->GetKd();
     this->pid->SetOutputLimits(0, 255);
     this->pid->SetMode(AUTOMATIC);
 
     this->events->register_observer(this);
 }
 
-void PIDControlComponent::notify(const char *event, const uint8_t channel, const char *data)
+void PIDControl::notify(const char *event, uint16_t payload)
 {
-    if (strncmp(event, "temp", 4) == 0 && channel == this->channel)
+    if (strncmp(event, "temp", 4) == 0)
     {
-        *input = atof(data);
+        *this->input = (double)payload / 10.0;
         this->previous_input_timestamp = millis();
     }
-    else if (strncmp(event, "target", 6) == 0 && channel == this->channel)
+    else if (strncmp(event, "target", 6) == 0)
     {
-        *setpoint = atof(data);
+        *this->setpoint = (double)payload / 10.0;
     }
-    else if (strncmp(event, "kp", 2) == 0 && channel == this->channel)
+    else if (strncmp(event, "kp", 2) == 0)
     {
-        this->Kp = atof(data);
+        this->Kp = (double)payload / 100.0;
         this->pid->SetTunings(this->Kp, this->Ki, this->Kd);
     }
-    else if (strncmp(event, "ki", 2) == 0 && channel == this->channel)
+    else if (strncmp(event, "ki", 2) == 0)
     {
-        this->Ki = atof(data);
+        this->Ki = (double)payload / 100.0;
         this->pid->SetTunings(this->Kp, this->Ki, this->Kd);
     }
-    else if (strncmp(event, "kd", 2) == 0 && channel == this->channel)
+    else if (strncmp(event, "kd", 2) == 0)
     {
-        this->Kd = atof(data);
+        this->Kd = (double)payload / 100.0;
         this->pid->SetTunings(this->Kp, this->Ki, this->Kd);
     }
-    else if (strncmp(event, "mode", 4) == 0 && channel == this->channel)
+    else if (strncmp(event, "mode", 4) == 0)
     {
-        if (strncmp(data, "0", 1) == 0)
+        if (payload == 0)
         {
             this->automatic = false;
             this->pid->SetMode(0);
@@ -72,30 +70,27 @@ void PIDControlComponent::notify(const char *event, const uint8_t channel, const
     }
 }
 
-void PIDControlComponent::update()
+void PIDControl::update()
 {
-    char message[6];
-
     this->pid->Compute();
     if (automatic)
     {
-        dtostrf(*output, 1, 1, message);
         if (millis() - this->previous_input_timestamp > 30000)
         {
             // Not receiving temperature measurements
-            this->events->notify_observers("output", channel, "255");
+            this->events->notify_observers("output", 255);
             if (!this->notemp)
             {
-                this->events->notify_observers("mode", channel, "2");
+                this->events->notify_observers("mode", 2);
                 this->notemp = true;
             }
         }
         else
         {
-            this->events->notify_observers("output", channel, message);
+            this->events->notify_observers("output", (int)*this->output);
             if (this->notemp)
             {
-                this->events->notify_observers("mode", channel, "1");
+                this->events->notify_observers("mode", 1);
                 this->notemp = false;
             }
         }

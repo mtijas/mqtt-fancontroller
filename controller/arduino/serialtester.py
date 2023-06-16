@@ -1,12 +1,16 @@
 """
 Python serial tester for Arduino controller.
 
+Requirements:
+- pyserial
+- crc
+
 Usage example:
 
-For setting the temperature target on channel 1 to 20.00 C:
+For setting the temperature target to 20.00 C:
 
-Input: 1,64,1,2000<enter>
-Expected responses: ACK, RCVD, RCVD, RCVD (data is written in four parts)
+Input: WRITE_TARGET,2000<enter>
+Expected response: ACK
 
 The target should now be changed.
 """
@@ -14,157 +18,103 @@ The target should now be changed.
 import serial
 import curses
 import time
+from crc import Calculator, Configuration
 
 commands = {
-    "HELLO": 1,
-    "ACK": 2,
-    "RCVD": 3,
-    "END": 6,
-    "ERROR": 7,
-    "SET_TARGET": 64,
-    "SET_OUTPUT": 65,
-    "SET_KP": 66,
-    "SET_KI": 67,
-    "SET_KD": 68,
-    "SET_MODE": 69,
-    "GET_STATUS": 70,
-    "GET_SETTINGS": 71,
+    "NUL": b'\x00',
+    "SOH": b'\x01',
+    "STX": b'\x02',
+    "ETX": b'\x03',
+    "EOT": b'\x04',
+    "ENQ": b'\x05',
+    "ACK": b'\x06',
+    "BEL": b'\x07',
+    "NAK": b'\x08',
+    "READ_TEMP": b'\x21',
+    "READ_TARGET": b'\x22',
+    "READ_SPEED": b'\x23',
+    "READ_PWM": b'\x24',
+    "READ_KP": b'\x25',
+    "READ_KI": b'\x26',
+    "READ_KD": b'\x27',
+    "READ_MODE": b'\x28',
+    "READ_ALARM": b'\x29',
+    "WRITE_TEMP": b'\x31',
+    "WRITE_TARGET": b'\x32',
+    "WRITE_SPEED": b'\x33',
+    "WRITE_PWM": b'\x34',
+    "WRITE_KP": b'\x35',
+    "WRITE_KI": b'\x36',
+    "WRITE_KD": b'\x37',
+    "WRITE_MODE": b'\x38',
+    "WRITE_ALARM": b'\x39',
 }
 
 text_buffer = list()
+message_buffer = ""
 input_line_position = 0
-ser = serial.Serial("/dev/ttyACM0", 9600, timeout=5)
+ser = serial.Serial("/dev/ttyUSB0", 9600, timeout=5)
+
+crc_conf = Configuration(
+    width=16,
+    polynomial=0x1021,
+    init_value=0xFFFF,
+    final_xor_value=0,
+    reverse_input=False,
+    reverse_output=False
+)
+crc_calculator = Calculator(crc_conf)
+
 
 def get_byte_str(bytedata):
     return "".join("\\x{:02x}".format(letter) for letter in bytedata)
 
-def read_uint8():
+
+def read_byte():
     global text_buffer
     global ser
-    rcvd_bytes = ser.read()
-    rcvd_int = int.from_bytes(rcvd_bytes, "little")
-    if rcvd_int > 0:
-        text_buffer.append(f"Rx: {get_byte_str(rcvd_bytes)}")
+    global message_buffer
+    rcvd_byte = ser.read()
+    if rcvd_byte == commands["STX"]:
+        if message_buffer:
+            text_buffer.append(f"Unhandled data: {message_buffer}")
+        message_buffer = ""
+    elif rcvd_byte == commands["ETX"]:
+        text_buffer.append(f"Rx: {message_buffer}")
+        message_buffer = ""
+    elif rcvd_byte == commands["ACK"]:
+        text_buffer.append("Rx: ACK")
+    elif rcvd_byte == commands["NAK"]:
+        text_buffer.append("Rx: NAK")
     else:
-        text_buffer.append("No data received.")
-    return rcvd_int
-
-def read_uint16():
-    global text_buffer
-    global ser
-    rcvd_bytes = ser.read(2)
-    rcvd_int = int.from_bytes(rcvd_bytes, "little")
-    if rcvd_int > 0:
-        text_buffer.append(f"Rx: {get_byte_str(rcvd_bytes)}")
-    else:
-        text_buffer.append("No data received.")
-    return rcvd_int
-
-def read_int16():
-    received = read_uint16()
-    return received - 32768
-
-def write_uint8(data: int):
-    global text_buffer
-    global ser
-    bytedata = data.to_bytes(1, "little")
-    text_buffer.append("Tx: " + get_byte_str(bytedata))
-    ser.write(bytedata)
+        message_buffer += rcvd_byte.decode("ascii")
+    return rcvd_byte
 
 
-def write_uint16(data: int):
-    global text_buffer
-    global ser
-    bytedata = data.to_bytes(2, "little")
-    text_buffer.append("Tx: " + get_byte_str(bytedata))
-    ser.write(bytedata)
-
-def receive_controller_status():
-    received = read_int16()
-    if received > -32768:
-        text_buffer.append(f"Interpreted as {received/10}")
-    received = read_int16()
-    if received > -32768:
-        text_buffer.append(f"Interpreted as {received/10}")
-    received = read_int16()
-    if received > -32768:
-        text_buffer.append(f"Interpreted as {received}")
-    received = read_int16()
-    if received > -32768:
-        text_buffer.append(f"Interpreted as {received}")
-
-    write_uint8(commands["RCVD"])
-    return True
-
-def receive_controller_settings():
-    received = read_uint16()
-    if received > 0:
-        text_buffer.append(f"Interpreted as {received}")
-    received = read_uint16()
-    if received > 0:
-        text_buffer.append(f"Interpreted as {received/100}")
-    received = read_uint16()
-    if received > 0:
-        text_buffer.append(f"Interpreted as {received/100}")
-    received = read_uint16()
-    if received > 0:
-        text_buffer.append(f"Interpreted as {received/100}")
-
-    write_uint8(commands["RCVD"])
-    return True
-
-def write_to_controller_sequence(parts: list) -> bool:
+def tx_to_controller(parts: list):
     """Command sequence for writing data to the controller"""
     global text_buffer
     global ser
-    if int(parts[0]) not in data_write_method:
-        text_buffer.append("Unknown command")
-        return False
+    payload = ""
 
-    ser.reset_input_buffer()
+    cmd = commands[parts[0]]
+    if (len(parts) > 1):
+        payload = parts[1]
 
-    write_uint8(commands["HELLO"])
-    response = read_uint8()
-    if response != commands["ACK"]:
-        text_buffer.append("Got unexpected response on HELLO, aborting...")
-        return False
+    crc_sum = crc_calculator.checksum(
+        f"{cmd.decode('ascii')}{payload}".encode('utf-8'))
 
-    write_uint8(int(parts[0]))
-    write_uint8(int(parts[1]))
+    crc_sum_str = format(crc_sum, "04X")
 
-    # Writing data is always a simple task of writing n number of bytes
-    # Response should be byte \x03, so we may just read it here
-    data_write_method[int(parts[0])](int(parts[2]))
-    response = read_uint8()
-    if response == commands["RCVD"]:
-        return True
-    else:
-        text_buffer.append(f"Unexpected response (was: {response}).")
+    ser.write(commands["STX"])
+    ser.write(cmd)
+    ser.write(payload.encode("utf-8"))
+    ser.write(crc_sum_str.encode("utf-8"))
+    ser.write(commands["ETX"])
 
-    text_buffer.append("Transfer failed.")
-    return False
+    text_buffer.append(
+        f"Tx: {cmd.decode('ascii')}{payload} [CRC:{crc_sum_str}]")
 
-def request_from_controller_sequence(parts: list) -> bool:
-    global text_buffer
-    global ser
-    if int(parts[0]) not in data_read_method:
-        text_buffer.append("Unknown command")
-        return False
-
-    ser.reset_input_buffer()
-
-    write_uint8(commands["HELLO"])
-    response = read_uint8()
-    if response != commands["ACK"]:
-        text_buffer.append("Got unexpected response on HELLO, aborting...")
-        return False
-
-    write_uint8(int(parts[0]))
-    write_uint8(int(parts[1]))
-
-    # Receiving data is more complicated than sending commands, so we'll
-    # expect boolean from the method instead of reading single byte here.
-    return data_read_method[int(parts[0])]()
 
 def read_user_input(message: str) -> str:
     global input_line_position
@@ -181,19 +131,6 @@ def read_user_input(message: str) -> str:
     stdscr.nodelay(True)
     return str_input
 
-data_write_method = {
-    64: write_uint16,
-    65: write_uint8,
-    66: write_uint16,
-    67: write_uint16,
-    68: write_uint16,
-    69: write_uint8,
-}
-
-data_read_method = {
-    70: receive_controller_status,
-    71: receive_controller_settings,
-}
 
 def main(stdscr):
     global text_buffer
@@ -228,26 +165,17 @@ def main(stdscr):
         if c == ord('i') or c == ord('I'):
             str_input = read_user_input("Command sequence: ")
             parts = str_input.split(",")
-            if len(parts) == 2:
-                text_buffer.append(f"Sending READ sequence: {str_input}")
-                result = request_from_controller_sequence(parts)
-            elif len(parts) == 3:
-                text_buffer.append(f"Sending WRITE sequence: {str_input}")
-                result = write_to_controller_sequence(parts)
+            if parts[0] in commands:
+                tx_to_controller(parts)
             else:
                 text_buffer.append(f"Bad sequence, not sending: {str_input}")
-
-            if not result:
-                text_buffer.append("Sending sequence failed. Is controller connected?")
 
         if auto_report and (time.monotonic() - previous_autoreport > 10):
             previous_autoreport = time.monotonic()
             text_buffer.append("Requesting reports...")
-            request_from_controller_sequence([70,1])
-            request_from_controller_sequence([70,2])
 
         while ser.in_waiting > 0:
-            result = read_uint8()
+            result = read_byte()
 
         if text_buffer:
             max_y, _ = stdscr.getmaxyx()
@@ -265,7 +193,9 @@ def main(stdscr):
 
     ser.close()
 
+
 if __name__ == "__main__":
+    e_msg = "OK"
     stdscr = curses.initscr()
 
     try:
@@ -275,9 +205,11 @@ if __name__ == "__main__":
         stdscr.keypad(False)
         curses.echo()
         curses.endwin()
-        print(f"Unexpected exception: {e}")
+        e_msg = f"{e}"
+        exit(-1)
     finally:
         curses.nocbreak()
         stdscr.keypad(False)
         curses.echo()
         curses.endwin()
+        print(f"Shutdown: {e_msg}")

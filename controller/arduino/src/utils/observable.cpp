@@ -7,7 +7,7 @@ using namespace std;
  *
  * @param observer
  */
-void Observable::register_observer(Observer* observer)
+void Observable::register_observer(Observer *observer)
 {
     if (arr_length < 50)
     {
@@ -17,14 +17,14 @@ void Observable::register_observer(Observer* observer)
 }
 
 /**
- * @brief Notify all registered Observers of an event, with data
+ * @brief Notify all registered Observers of an event, with payload
  *
- * @param data
+ * @param payload
  */
-void Observable::notify_observers(const char *event, const uint8_t channel, const char *data)
+void Observable::notify_observers(const char *event, uint16_t payload)
 {
     for (int i = 0; i < arr_length; i++)
     {
-        observers[i]->notify(event, channel, data);
+        observers[i]->notify(event, payload);
     }
 }

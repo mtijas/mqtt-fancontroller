@@ -12,7 +12,7 @@ private:
 
 public:
     void register_observer(Observer *observer);
-    void notify_observers(const char *event, const uint8_t channel, const char *data);
+    void notify_observers(const char *event, uint16_t payload);
 };
 
 #endif

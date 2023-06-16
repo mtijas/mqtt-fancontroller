@@ -8,7 +8,7 @@
 using namespace std;
 
 class Maxim18b20
-: public TimedComponent
+    : public TimedComponent
 {
 private:
     DS18B20 *ds;
@@ -17,7 +17,7 @@ private:
 public:
     Maxim18b20(Observable *events, DS18B20 *ds, int update_interval, int port);
     void setup();
-    void notify(const char *event, const uint8_t channel, const char *data);
+    void notify(const char *event, uint16_t payload);
     void update();
 };
 

@@ -10,7 +10,6 @@ class PWMFan
     : public TimedComponent
 {
 private:
-    char channel;
     int sense_pin;
     int pwm_pin;
     volatile int fan_pulses;
@@ -20,10 +19,9 @@ public:
         Observable *events,
         int update_interval,
         int sense_pin,
-        int pwm_pin,
-        const uint8_t channel);
+        int pwm_pin);
     void setup();
-    void notify(const char *event, const uint8_t channel, const char *data);
+    void notify(const char *event, uint16_t payload);
     void update();
     void pickPulse();
 };

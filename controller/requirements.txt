@@ -2,3 +2,5 @@ AUnit
 OneWire
 DS18B20
 PID
+LiquidCrystal
+CRC

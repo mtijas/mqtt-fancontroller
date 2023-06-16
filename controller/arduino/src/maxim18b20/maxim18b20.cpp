@@ -9,22 +9,17 @@ Maxim18b20::Maxim18b20(Observable *events, DS18B20 *ds, int update_interval, int
 
 void Maxim18b20::setup() {}
 
-void Maxim18b20::notify(const char *event, const uint8_t channel, const char *data) {}
+void Maxim18b20::notify(const char *event, uint16_t payload) {}
 
 void Maxim18b20::update()
 {
-    int number = 1;
     float temp;
-    int result;
-    char data[8];
+    uint16_t payload;
 
     while (ds->selectNext())
     {
         temp = ds->getTempC();
-
-        dtostrf(temp, 1, 1, data);
-
-        events->notify_observers("temp", number, data);
-        number++;
+        payload = (int)(temp * 10.0 + 32768);
+        events->notify_observers("temp", payload);
     }
 }

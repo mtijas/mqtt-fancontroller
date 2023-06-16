@@ -4,6 +4,6 @@
  * @brief Callback for Observables to call when distributing events
  *
  * @param event
- * @param data
+ * @param payload
  */
-void Observer::notify(const char *event, const uint8_t channel, const char *data){};
+void Observer::notify(const char *event, uint16_t payload){};

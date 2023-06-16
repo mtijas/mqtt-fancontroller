@@ -6,13 +6,11 @@ PWMFan::PWMFan(
     Observable *events,
     int update_interval,
     int sense_pin,
-    int pwm_pin,
-    const uint8_t channel)
+    int pwm_pin)
     : TimedComponent(events, update_interval)
 {
     this->sense_pin = sense_pin;
     this->pwm_pin = pwm_pin;
-    this->channel = channel;
     this->fan_pulses = 0;
 }
 
@@ -25,22 +23,19 @@ void PWMFan::setup()
     this->events->register_observer(this);
 }
 
-void PWMFan::notify(const char *event, const uint8_t channel, const char *data)
+void PWMFan::notify(const char *event, uint16_t payload)
 {
-    if (strncmp(event, "output", 6) == 0 && channel == this->channel)
+    if (strncmp(event, "output", 6) == 0)
     {
-        int value = atoi(data);
-        if (value >= 0 && value <= 255)
+        if (payload >= 0 && payload <= 255)
         {
-            analogWrite(pwm_pin, value);
+            analogWrite(pwm_pin, payload);
         }
     }
 }
 
 void PWMFan::update()
 {
-    char message[6];
-
     int pulses = this->fan_pulses;
     this->fan_pulses = 0;
 
@@ -48,9 +43,15 @@ void PWMFan::update()
     double pulses_per_minute = pulses / elapsed_seconds * 60;
     int rpm = int(pulses_per_minute / PULSES_PER_REVOLUTION);
 
-    snprintf(message, sizeof message, "%i", rpm);
-
-    this->events->notify_observers("speed", channel, message);
+    this->events->notify_observers("speed", rpm);
+    if (rpm == 0)
+    {
+        this->events->notify_observers("alarm", 1);
+    }
+    else
+    {
+        this->events->notify_observers("alarm", 0);
+    }
 }
 
 void PWMFan::pickPulse()

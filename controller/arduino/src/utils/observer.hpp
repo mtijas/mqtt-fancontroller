@@ -8,7 +8,7 @@ using namespace std;
 class Observer
 {
 public:
-    virtual void notify(const char *event, const uint8_t channel, const char *data) = 0;
+    virtual void notify(const char *event, uint16_t payload) = 0;
 };
 
 #endif

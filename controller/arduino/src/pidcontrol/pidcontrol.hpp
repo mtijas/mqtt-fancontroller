@@ -1,5 +1,5 @@
-#ifndef PIDCONTROLCOMPONENT_H
-#define PIDCONTROLCOMPONENT_H
+#ifndef PIDCONTROL_H
+#define PIDCONTROL_H
 
 #include "Arduino.h"
 #include <PID_v1.h>
@@ -7,12 +7,9 @@
 
 using namespace std;
 
-class PIDControlComponent
+class PIDControl
     : public TimedComponent
 {
-private:
-    char channel;
-
 protected:
     bool automatic;
     double Kp;
@@ -26,16 +23,15 @@ protected:
     PID *pid;
 
 public:
-    PIDControlComponent(
+    PIDControl(
         Observable *events,
         PID *pid,
         int update_interval,
-        const uint8_t channel,
         double *input,
         double *output,
         double *setpoint);
     void setup();
-    void notify(const char *event, const uint8_t channel, const char *data);
+    void notify(const char *event, uint16_t payload);
     void update();
 };
 
