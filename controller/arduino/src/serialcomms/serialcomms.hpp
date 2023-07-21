@@ -1,14 +1,13 @@
 #ifndef SERIALCOMMS_H
 #define SERIALCOMMS_H
 
-#include <SoftwareSerial.h>
-#include <CRC16.h>
 #include "../utils/timedcomponent.hpp"
+#include <CRC16.h>
+#include <SoftwareSerial.h>
 
 using namespace std;
 
-enum CC
-{
+enum CC {
     NUL = 0x0,
     SOH = 0x01,
     STX = 0x02,
@@ -38,10 +37,8 @@ enum CC
     WRITE_ALARM = 0x39,
 };
 
-class SerialComms
-    : public TimedComponent
-{
-protected:
+class SerialComms : public TimedComponent {
+  protected:
     SoftwareSerial *sPort;
     int bauds;
     char temp[8], target[8], kp[7], ki[7], kd[7];
@@ -50,11 +47,12 @@ protected:
     volatile int message_length = 0;
     CRC16 *crc;
 
-public:
-    SerialComms(Observable *events, int update_interval, const byte rxPin, const byte txPin);
+  public:
+    SerialComms(Observable *events, int update_interval, const byte rxPin,
+                const byte txPin);
     void setup(int bauds);
     void setup();
-    void notify(const char *event, uint16_t payload);
+    void notify(const char *event, int payload);
     void update();
     void send_data(char command, const char *data);
     bool validate_message();

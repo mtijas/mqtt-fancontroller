@@ -5,10 +5,9 @@
 
 using namespace std;
 
-class Observer
-{
-public:
-    virtual void notify(const char *event, uint16_t payload) = 0;
+class Observer {
+  public:
+    virtual void notify(const char *event, int payload) = 0;
 };
 
 #endif

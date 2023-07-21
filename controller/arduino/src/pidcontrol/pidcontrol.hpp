@@ -1,16 +1,14 @@
 #ifndef PIDCONTROL_H
 #define PIDCONTROL_H
 
+#include "../utils/timedcomponent.hpp"
 #include "Arduino.h"
 #include <PID_v1.h>
-#include "../utils/timedcomponent.hpp"
 
 using namespace std;
 
-class PIDControl
-    : public TimedComponent
-{
-protected:
+class PIDControl : public TimedComponent {
+  protected:
     bool automatic;
     double Kp;
     double Ki;
@@ -22,16 +20,11 @@ protected:
     bool notemp;
     PID *pid;
 
-public:
-    PIDControl(
-        Observable *events,
-        PID *pid,
-        int update_interval,
-        double *input,
-        double *output,
-        double *setpoint);
+  public:
+    PIDControl(Observable *events, PID *pid, int update_interval, double *input,
+               double *output, double *setpoint);
     void setup();
-    void notify(const char *event, uint16_t payload);
+    void notify(const char *event, int payload);
     void update();
 };
 

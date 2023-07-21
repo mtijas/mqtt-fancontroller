@@ -6,4 +6,4 @@
  * @param event
  * @param payload
  */
-void Observer::notify(const char *event, uint16_t payload){};
+void Observer::notify(const char *event, int payload){};
