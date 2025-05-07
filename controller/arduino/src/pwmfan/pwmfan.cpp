@@ -8,6 +8,7 @@ PWMFan::PWMFan(Observable *events, int update_interval, int sense_pin,
     this->sense_pin = sense_pin;
     this->pwm_pin = pwm_pin;
     this->fan_pulses = 0;
+    this->fan_fail = false;
 }
 
 void PWMFan::setup() {
@@ -20,7 +21,11 @@ void PWMFan::setup() {
 
 void PWMFan::notify(const char *event, int payload) {
     if (strncmp(event, "output", 6) == 0) {
-        if (payload >= 0 && payload <= 255) {
+        if (payload < 0) {
+            analogWrite(pwm_pin, 0);
+        } else if (payload > 255) {
+            analogWrite(pwm_pin, 255);
+        } else {
             analogWrite(pwm_pin, payload);
         }
     }
@@ -35,10 +40,12 @@ void PWMFan::update() {
     int rpm = int(pulses_per_minute / PULSES_PER_REVOLUTION);
 
     this->events->notify_observers("speed", rpm);
-    if (rpm == 0) {
-        this->events->notify_observers("alarm", 1);
-    } else {
-        this->events->notify_observers("alarm", 0);
+    if (rpm == 0 && !fan_fail) {
+        this->events->notify_observers("alm_fail_fan", 1);
+        fan_fail = true;
+    } else if (rpm > 0 && fan_fail) {
+        this->events->notify_observers("alm_fail_fan", 0);
+        fan_fail = false;
     }
 }
 

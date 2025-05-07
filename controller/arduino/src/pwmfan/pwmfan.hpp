@@ -11,6 +11,7 @@ class PWMFan : public TimedComponent {
     int sense_pin;
     int pwm_pin;
     volatile int fan_pulses;
+    bool fan_fail;
 
   public:
     PWMFan(Observable *events, int update_interval, int sense_pin, int pwm_pin);

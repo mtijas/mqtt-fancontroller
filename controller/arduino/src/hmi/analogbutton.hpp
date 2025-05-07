@@ -8,13 +8,14 @@ using namespace std;
 
 class AnalogButton : public TimedComponent {
   protected:
-    int pin, port_status, lower_code, upper_code;
-    unsigned long prev_keydn, prev_keyup;
-    bool event_sent, key_pressed;
+    int pin, port_status;
+    unsigned long prev_keyup_timestamp, prev_event_timestamp;
+    bool key_pressed;
+    const char *lower_event, *upper_event;
 
   public:
     AnalogButton(Observable *events, int update_interval, int pin,
-                 int lower_code, int upper_code);
+                 const char *lower_event, const char *upper_event);
     void setup();
     void notify(const char *event, int payload);
     void update();

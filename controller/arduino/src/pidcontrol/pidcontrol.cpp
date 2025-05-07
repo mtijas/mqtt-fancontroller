@@ -51,23 +51,20 @@ void PIDControl::notify(const char *event, int payload) {
 void PIDControl::update() {
     this->pid->Compute();
 
-    if (!automatic) {
-        return;
-    }
-
-    if (millis() - this->previous_input_timestamp > 30000) {
+    if (millis() - this->previous_input_timestamp > 10000) {
         // Not receiving temperature measurements
-        this->events->notify_observers("output", 255);
         if (!this->notemp) {
-            this->events->notify_observers("mode", 2);
+            this->events->notify_observers("alm_fail_sensor", 1);
             this->notemp = true;
         }
-        return;
     } else {
-        this->events->notify_observers("output", (int)*this->output);
         if (this->notemp) {
-            this->events->notify_observers("mode", 1);
+            this->events->notify_observers("alm_fail_sensor", 0);
             this->notemp = false;
         }
+    }
+
+    if (automatic) {
+        this->events->notify_observers("output", (int)*this->output);
     }
 }

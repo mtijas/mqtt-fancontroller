@@ -14,63 +14,73 @@ HD44780::HD44780(Observable *events, int update_interval, int rs, int en,
 void HD44780::setup() {
     lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
     lcd->begin(16, 2);
-    lcd->print(" Fan Controller ");
-    lcd->setCursor(0, 1);
-    lcd->print("   Booting...   ");
+    lcd->clear();
+    print_fmt(0, 0, "", "                ");
+    print_fmt(0, 1, "    @", "                ");
     events->register_observer(this);
 }
 
 void HD44780::notify(const char *event, int payload) {
-    float temporary = 0.0;
-
     if (strncmp(event, "temp", 4) == 0) {
-        temporary = payload / 10.0;
-        lcd->setCursor(2, 0);
-        lcd->print("      ");
-        lcd->setCursor(2, 0);
-        lcd->print(temporary);
+        print_fmt(0, 0, payload, "     ");
     } else if (strncmp(event, "target", 6) == 0) {
-        temporary = payload / 10.0;
-        lcd->setCursor(10, 0);
-        lcd->print("      ");
-        lcd->setCursor(10, 0);
-        lcd->print(temporary);
+        print_fmt(5, 0, payload, "     ");
     } else if (strncmp(event, "speed", 5) == 0) {
-        lcd->setCursor(0, 1);
-        lcd->print("    ");
-        lcd->setCursor(0, 1);
-        lcd->print(payload);
+        print_fmt(0, 1, payload, "    ");
     } else if (strncmp(event, "output", 6) == 0) {
-        lcd->setCursor(5, 1);
-        lcd->print("   ");
-        lcd->setCursor(5, 1);
-        lcd->print(payload);
+        print_fmt(5, 1, payload, "   ");
     } else if (strncmp(event, "mode", 4) == 0) {
-        lcd->setCursor(9, 1);
         switch (payload) {
         case 0:
-            lcd->print("MANU");
+            print_fmt(10, 1, "MANUAL", "      ");
             break;
         case 1:
-            lcd->print("AUTO");
-            break;
-        case 2:
-            lcd->print("MAX!");
+            print_fmt(10, 1, "  AUTO", "      ");
             break;
         default:
-            lcd->print("ERR!");
+            print_fmt(10, 1, "ERROR!", "      ");
             break;
         }
-    } else if (strncmp(event, "alarm", 5) == 0) {
-        lcd->setCursor(14, 1);
-        lcd->print(1 == payload ? "AL" : "OK");
+    } else if (strncmp(event, "alm_fail_fan", 12) == 0) {
+        print_fmt(14, 0, payload == 1 ? "F" : "f", " ");
+    } else if (strncmp(event, "alm_high_temp", 13) == 0) {
+        print_fmt(15, 0, payload == 1 ? "T" : "t", " ");
+    } else if (strncmp(event, "alm_fail_sensor", 15) == 0) {
+        print_fmt(13, 0, payload == 1 ? "S" : "s", " ");
+    } else if (strncmp(event, "pending_write", 13) == 0) {
+        print_fmt(12, 0, "W", " ");
+    } else if (strncmp(event, "read_memory", 11) == 0) {
+        print_fmt(12, 0, "w", " ");
+    } else if (strncmp(event, "write_memory", 12) == 0) {
+        print_fmt(12, 0, "w", " ");
     } else if (strncmp(event, "bootup_complete", 15) == 0) {
-        lcd->clear();
-        lcd->setCursor(0, 0);
-        lcd->print("T:      S:      ");
-        lcd->setCursor(0, 1);
-        lcd->print("    @   |       ");
+        print_fmt(12, 0, "w", " ");
     }
 }
 
 void HD44780::update() { return; }
+
+void HD44780::print_fmt(int column, int row, const char *message,
+                        const char *placeholder) {
+    prepare_print_position(column, row, placeholder);
+    lcd->print(message);
+}
+
+void HD44780::print_fmt(int column, int row, float message,
+                        const char *placeholder) {
+    prepare_print_position(column, row, placeholder);
+    lcd->print(message);
+}
+
+void HD44780::print_fmt(int column, int row, int message,
+                        const char *placeholder) {
+    prepare_print_position(column, row, placeholder);
+    lcd->print(message);
+}
+
+void HD44780::prepare_print_position(int column, int row,
+                                     const char *placeholder) {
+    lcd->setCursor(column, row);
+    lcd->print(placeholder);
+    lcd->setCursor(column, row);
+}

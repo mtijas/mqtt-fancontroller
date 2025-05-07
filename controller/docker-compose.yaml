@@ -10,8 +10,6 @@
 # Add yourself to the dialout group: `sudo usermod -aG dialout <username>`
 # Logout and login, and try again.
 
-version: "3.5"
-
 services:
   uploader:
     image: fc-arduino-dev

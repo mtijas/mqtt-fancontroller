@@ -53,7 +53,7 @@ send_commands = {
 text_buffer = list()
 message_buffer = ""
 input_line_position = 0
-ser = serial.Serial("/dev/ttyUSB0", 9600, timeout=5)
+ser = serial.Serial("/dev/cu.usbserial-01348EC6", 9600, timeout=5)
 
 crc_conf = Configuration(
     width=16,

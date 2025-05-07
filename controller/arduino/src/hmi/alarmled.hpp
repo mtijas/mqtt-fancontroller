@@ -9,6 +9,9 @@ using namespace std;
 class AlarmLED : public Component {
   private:
     int led_pin;
+    bool temp_high;
+    bool fan_fail;
+    bool sensor_fail;
 
   public:
     AlarmLED(Observable *events, int led_pin);
