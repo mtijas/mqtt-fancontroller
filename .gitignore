@@ -137,3 +137,5 @@ bridge/config.yaml
 # 3rd party libraries
 controller/arduino/src/libs/*
 !controller/arduino/src/libs/README.md
+
+.DS_Store
