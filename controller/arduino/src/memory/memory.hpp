@@ -9,7 +9,7 @@ using namespace std;
 
 class Memory : public TimedComponent {
   private:
-    int temp_target;
+    int temp_target, kp, ki, kd, mode;
     bool needs_saving = false;
 
   public:

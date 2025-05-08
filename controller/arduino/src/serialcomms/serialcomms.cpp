@@ -12,6 +12,9 @@ void SerialComms::setup(int bauds) {
     this->bauds = bauds;
     sPort->begin(bauds);
     sPort->listen();
+    send_data("MQTT Fan Contr.");
+    send_data("Serial Console");
+    send_data("?");
     events->register_observer(this);
 }
 
@@ -21,25 +24,48 @@ void SerialComms::notify(const char *event, int payload) {
     float temporary = 0.0;
 
     if (strncmp(event, "temp", 4) == 0) {
-        dtostrf(payload, 1, 0, temp);
+        temp = payload;
     } else if (strncmp(event, "target", 6) == 0) {
-        dtostrf(payload, 1, 0, target);
+        target = payload;
     } else if (strncmp(event, "speed", 5) == 0) {
-        dtostrf(payload, 1, 0, speed);
+        speed = payload;
     } else if (strncmp(event, "output", 6) == 0) {
-        dtostrf(payload, 1, 0, output);
+        output = payload;
     } else if (strncmp(event, "mode", 4) == 0) {
-        dtostrf(payload, 1, 0, mode);
+        mode = payload;
     } else if (strncmp(event, "kp", 2) == 0) {
-        dtostrf(payload, 1, 0, kp);
+        kp = payload;
     } else if (strncmp(event, "ki", 2) == 0) {
-        dtostrf(payload, 1, 0, ki);
+        ki = payload;
     } else if (strncmp(event, "kd", 2) == 0) {
-        dtostrf(payload, 1, 0, kd);
+        kd = payload;
     } else if (strncmp(event, "alarm", 5) == 0) {
-        dtostrf(payload, 1, 0, alarm);
+        alarm = payload;
     } else if (strncmp(event, "keypress", 8) == 0) {
         sPort->print(payload);
+    } else if (strncmp(event, "pending_write", 13) == 0) {
+        send_data("Pending save!");
+    } else if (strncmp(event, "alm_fail_fan", 12) == 0) {
+        if (payload == 1) {
+            send_data("FAN FAILED!");
+            alm_fail_fan = true;
+        } else {
+            alm_fail_fan = false;
+        }
+    } else if (strncmp(event, "alm_fail_sensor", 12) == 0) {
+        if (payload == 1) {
+            send_data("SENSOR FAILED!");
+            alm_fail_sensor = true;
+        } else {
+            alm_fail_sensor = false;
+        }
+    } else if (strncmp(event, "alm_high_temp", 12) == 0) {
+        if (payload == 1) {
+            send_data("HIGH TEMPERATURE!");
+            alm_high_temp = true;
+        } else {
+            alm_high_temp = false;
+        }
     }
 }
 
@@ -47,12 +73,8 @@ void SerialComms::update() {
     char received;
     if (sPort->available()) {
         received = sPort->read();
-        if (received == STX) {
-            // Start of TeXt: discard any old data
-            message_buffer[0] = '\n';
-            message_length = 0;
-        } else if (received == ETX) {
-            // End of TeXt: maybe we received a whole message
+        if (received == LF) {
+            // Line Feed: maybe we received a whole message
             // Let's check that by validating message CRC
             if (validate_message()) {
                 handle_message();
@@ -63,11 +85,10 @@ void SerialComms::update() {
             message_buffer[0] = '\n';
             message_length = 0;
         } else {
-            // Received byte wasn't a known control character, so
-            // let's assume it is part of the message body.
-            // We also assume message length to never exceed 16 chars total.
-            // Message validation depends on capping the length to 16!
-            if (message_length < 16) {
+            // Received byte wasn't LF, so let's assume it is part of the message body.
+            // We also assume message length to never exceed 64 chars total.
+            // Message validation depends on capping the length to 64!
+            if (message_length < 63) {
                 message_buffer[message_length] = received;
                 message_length++;
                 message_buffer[message_length] = '\n';
@@ -82,19 +103,17 @@ void SerialComms::update() {
     }
 }
 
-void SerialComms::send_data(char command, const char *data) {
+void SerialComms::send_data(const char *data) {
     char *ptr = data;
     char crc_str[5];
     int crc_result = 0x0;
 
     crc->restart();
 
-    sPort->write(STX);
-    sPort->write(command);
-    crc->add(command);
-
-    ptr = data;
     for (char c = *ptr; c; c = *++ptr) {
+        if (c == '\n') {
+            break;
+        }
         sPort->write(c);
         crc->add(c);
     }
@@ -102,7 +121,7 @@ void SerialComms::send_data(char command, const char *data) {
     crc_result = crc->getCRC();
     snprintf(crc_str, 5, "%04X", crc_result);
     sPort->print(crc_str);
-    sPort->write(ETX);
+    sPort->write(LF);
 }
 
 bool SerialComms::validate_message() {
@@ -144,88 +163,115 @@ bool SerialComms::validate_message() {
 
 void SerialComms::handle_message() {
     char message[12];
+    int attr_val = -999;
 
-    // Command character should always be the first char of message body
-    char command = message_buffer[0];
-
-    // Payload is anything but command and CRC, assume 11 chars max.
-    char payload[12];
-    for (int i = 1; i < message_length - 4; i++) {
-        payload[i - 1] = message_buffer[i];
-        payload[i] = '\n';
+    // Payload is anything but CRC, assume 32 chars max.
+    char command[32];
+    char attribute[32];
+    command[0] = '\n';
+    attribute[0] = '\n';
+    int position = 0;
+    int part = 0;
+    for (int i = 0; i < message_length - 4; i++) {
+        char chr = message_buffer[i];
+        if (chr == ' ') {
+            part++;
+            position = 0;
+        } else {
+            if (part == 0) {
+                command[position] = chr;
+                command[position+1] = '\n';
+            } else {
+                attribute[position] = chr;
+                attribute[position+1] = '\n';
+            }
+            position++;
+        }
     }
 
-    switch (command) {
-    case READ_TEMP:
+    if (attribute[0] != '\n') {
+        attr_val = atoi(attribute);
+    }
+
+    if (strncmp(command, "read_temp", 9) == 0) {
+        snprintf(message, 12, "%d", temp);
+        send_data(message);
+    } else if (strncmp(command, "read_target", 11) == 0) {
+        snprintf(message, 12, "%d", target);
+        send_data(message);
+    } else if (strncmp(command, "read_speed", 10) == 0) {
+        snprintf(message, 12, "%d", speed);
+        send_data(message);
+    } else if (strncmp(command, "read_pwm", 8) == 0) {
+        snprintf(message, 4, "%d", output);
+        send_data(message);
+    } else if (strncmp(command, "read_kp", 7) == 0) {
+        snprintf(message, 12, "%d", kp);
+        send_data(message);
+    } else if (strncmp(command, "read_ki", 7) == 0) {
+        snprintf(message, 12, "%d", ki);
+        send_data(message);
+    } else if (strncmp(command, "read_kd", 7) == 0) {
+        snprintf(message, 12, "%d", kd);
+        send_data(message);
+    } else if (strncmp(command, "read_mode", 9) == 0) {
+        snprintf(message, 2, "%d", mode);
+        send_data(message);
+    } else if (strncmp(command, "read_alarm", 10) == 0) {
+        snprintf(message, 12, "%d", alarm);
+        send_data(message);
+    } else if (strncmp(command, "write_target", 12) == 0) {
+        if (part > 0 && attr_val >= 0 && attr_val <= 1500) {
+            sPort->write(ACK);
+            events->notify_observers("target", attr_val);
+        } else {
+            sPort->write(NAK);
+        }
+    } else if (strncmp(command, "write_output", 12) == 0) {
+        if (attr_val >= 0 && attr_val <= 255) {
+            sPort->write(ACK);
+            events->notify_observers("output", attr_val);
+        } else {
+            sPort->write(NAK);
+        }
+    } else if (strncmp(command, "write_kp", 8) == 0) {
+        if (attr_val >= 0 && attr_val <= 1000) {
+            sPort->write(ACK);
+            events->notify_observers("kp", attr_val);
+        } else {
+            sPort->write(NAK);
+        }
+    } else if (strncmp(command, "write_ki", 8) == 0) {
+        if (attr_val >= 0 && attr_val <= 1000) {
+            sPort->write(ACK);
+            events->notify_observers("ki", attr_val);
+        } else {
+            sPort->write(NAK);
+        }
+    } else if (strncmp(command, "write_kd", 8) == 0) {
+        if (attr_val >= 0 && attr_val <= 1000) {
+            sPort->write(ACK);
+            events->notify_observers("kd", attr_val);
+        } else {
+            sPort->write(NAK);
+        }
+    } else if (strncmp(command, "write_mode", 10) == 0) {
+        if (attr_val >= 0 && attr_val <= 1) {
+            sPort->write(ACK);
+            events->notify_observers("mode", attr_val);
+        } else {
+            sPort->write(NAK);
+        }
+    } else if (strncmp(command, "save", 4) == 0) {
         sPort->write(ACK);
-        snprintf(message, 12, "%s", temp);
-        send_data(WRITE_TEMP, message);
-        break;
-    case READ_TARGET:
+        events->notify_observers("write_memory", 1);
+    } else if (strncmp(command, "reset", 5) == 0) {
         sPort->write(ACK);
-        snprintf(message, 12, "%s", target);
-        send_data(WRITE_TARGET, message);
-        break;
-    case READ_SPEED:
-        sPort->write(ACK);
-        snprintf(message, 12, "%s", speed);
-        send_data(WRITE_SPEED, message);
-        break;
-    case READ_PWM:
-        sPort->write(ACK);
-        snprintf(message, 4, "%s", output);
-        send_data(WRITE_PWM, message);
-        break;
-    case READ_KP:
-        sPort->write(ACK);
-        snprintf(message, 12, "%s", kp);
-        send_data(WRITE_KP, message);
-        break;
-    case READ_KI:
-        sPort->write(ACK);
-        snprintf(message, 12, "%s", ki);
-        send_data(WRITE_KI, message);
-        break;
-    case READ_KD:
-        sPort->write(ACK);
-        snprintf(message, 12, "%s", kd);
-        send_data(WRITE_KD, message);
-        break;
-    case READ_MODE:
-        sPort->write(ACK);
-        snprintf(message, 2, "%s", mode);
-        send_data(WRITE_MODE, message);
-        break;
-    case READ_ALARM:
-        sPort->write(ACK);
-        snprintf(message, 12, "%s", alarm);
-        send_data(WRITE_ALARM, message);
-        break;
-    case WRITE_TARGET:
-        sPort->write(ACK);
-        events->notify_observers("target", atoi(payload));
-        break;
-    case WRITE_PWM:
-        sPort->write(ACK);
-        events->notify_observers("output", atoi(payload));
-        break;
-    case WRITE_KP:
-        sPort->write(ACK);
-        events->notify_observers("kp", atoi(payload));
-        break;
-    case WRITE_KI:
-        sPort->write(ACK);
-        events->notify_observers("ki", atoi(payload));
-        break;
-    case WRITE_KD:
-        sPort->write(ACK);
-        events->notify_observers("kd", atoi(payload));
-        break;
-    case WRITE_MODE:
-        sPort->write(ACK);
-        events->notify_observers("mode", atoi(payload));
-        break;
-    default:
+        events->notify_observers("read_memory", 1);
+    } else if (strncmp(command, "alerts", 5) == 0) {
+        snprintf(message, 25, "Fan:%d Sensor:%d Temp:%d", alm_fail_fan, alm_fail_sensor, alm_high_temp);
+        send_data(message);
+    } else {
         sPort->write(NAK);
     }
 }

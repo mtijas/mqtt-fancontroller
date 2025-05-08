@@ -93,13 +93,8 @@ void setup() {
     analogbutton3.setup();
 
     events.notify_observers("temp", 0);
-    events.notify_observers("target", 0);
     events.notify_observers("speed", 0);
     events.notify_observers("output", 255);
-    events.notify_observers("mode", 1);
-    events.notify_observers("kp", 400); // 4.00
-    events.notify_observers("ki", 40);  // 0.40
-    events.notify_observers("kd", 200); // 2.00
     events.notify_observers("alm_high_temp", 0);
     events.notify_observers("alm_fail_sensor", 0);
     events.notify_observers("alm_fail_fan", 0);
@@ -120,6 +115,7 @@ void loop() {
     analogbutton2.loop();
     analogbutton3.loop();
     alarmled.loop();
+    memory.loop();
 }
 
 void pickFan1Pulse() { fan1.pickPulse(); }
