@@ -2,7 +2,6 @@
 #define SERIALCOMMS_H
 
 #include "../utils/timedcomponent.hpp"
-#include <CRC16.h>
 #include <SoftwareSerial.h>
 
 using namespace std;
@@ -26,7 +25,6 @@ class SerialComms : public TimedComponent {
     bool alm_fail_sensor = false;
     volatile char message_buffer[64];
     volatile int message_length = 0;
-    CRC16 *crc;
 
   public:
     SerialComms(Observable *events, int update_interval, const byte rxPin,
@@ -36,7 +34,6 @@ class SerialComms : public TimedComponent {
     void notify(const char *event, int payload);
     void update();
     void send_data(const char *data);
-    bool validate_message();
     void handle_message();
 };
 

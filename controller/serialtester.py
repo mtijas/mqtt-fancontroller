@@ -18,7 +18,6 @@ The target should now be changed.
 import serial
 import curses
 import time
-from crc import Calculator, Configuration
 
 send_commands = {
     "NUL": b'\x00',
@@ -36,16 +35,7 @@ send_commands = {
 text_buffer = list()
 message_buffer = ""
 ser = serial.Serial("/dev/cu.usbserial-01348EC6", 9600, timeout=5)
-
-crc_conf = Configuration(
-    width=16,
-    polynomial=0x1021,
-    init_value=0xFFFF,
-    final_xor_value=0,
-    reverse_input=False,
-    reverse_output=False
-)
-crc_calculator = Calculator(crc_conf)
+cursor_position = 0
 
 
 def get_byte_str(bytedata):
@@ -56,13 +46,14 @@ def read_byte():
     global text_buffer
     global ser
     global message_buffer
+    global cursor_position
+    max_y, _ = stdscr.getmaxyx()
+    input_line_position = max_y - 1
     rcvd_byte = ser.read()
     if rcvd_byte == send_commands["LF"]:
-        crc_sum = crc_calculator.checksum(message_buffer[:-4].encode("ascii"))
-        crc_sum_str = format(crc_sum, "04X")
-        crc_ok = crc_sum_str == message_buffer[-4:]
-        text_buffer.append((f"{message_buffer[:-4]}", 1 if crc_ok else 3))
+        text_buffer.append((f"{message_buffer}", 1))
         message_buffer = ""
+        cursor_position = 0
     elif rcvd_byte == send_commands["ACK"]:
         text_buffer.append(("ACK", 2))
     elif rcvd_byte == send_commands["NAK"]:
@@ -70,32 +61,18 @@ def read_byte():
     else:
         try:
             message_buffer += rcvd_byte.decode("ascii")
+            stdscr.addch(input_line_position, cursor_position, rcvd_byte.decode("ascii"))
+            cursor_position += 1
         except UnicodeDecodeError as e:
             message_buffer += rcvd_byte.hex()
 
     return rcvd_byte
 
 
-def tx_to_controller(payload: str):
-    """Command sequence for writing data to the controller"""
-    global text_buffer
-    global ser
-
-    crc_sum = crc_calculator.checksum(
-        f"{payload}".encode('utf-8'))
-
-    crc_sum_str = format(crc_sum, "04X")
-
-    ser.write(payload.encode("utf-8"))
-    ser.write(crc_sum_str.encode("utf-8"))
-    ser.write(send_commands["LF"])
-
-    text_buffer.append((f"{payload} [CRC:{crc_sum_str}]", 1))
-
-
 def main(stdscr):
     global text_buffer
     global ser
+    global cursor_position
     max_y, _ = stdscr.getmaxyx()
     input_line_position = max_y - 1
     result = False
@@ -115,15 +92,11 @@ def main(stdscr):
     while True:
         c = stdscr.getch()
 
-        if c == curses.KEY_ENTER or c == 10 or c == 13:
-            tx_to_controller(str_input)
-            str_input = ""
-        elif c == curses.KEY_BACKSPACE or c == ord('\b') or c == 127:
-            str_input = str_input[:-1]
-            stdscr.delch(input_line_position, len(str_input))
-        elif c != curses.ERR:
-            str_input += chr(c)
-            stdscr.addch(input_line_position, len(str_input)-1, chr(c))
+        # if c == curses.KEY_BACKSPACE or c == ord('\b') or c == 127:
+        #     str_input = str_input[:-1]
+        #     stdscr.delch(input_line_position, len(str_input))
+        if c != curses.ERR:
+            ser.write(chr(c).encode('utf-8'))
 
         while ser.in_waiting > 0:
             result = read_byte()

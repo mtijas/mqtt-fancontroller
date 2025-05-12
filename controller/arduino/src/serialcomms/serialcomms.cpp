@@ -8,7 +8,6 @@ SerialComms::SerialComms(Observable *events, int update_interval,
 }
 
 void SerialComms::setup(int bauds) {
-    this->crc = new CRC16(0x1021, 0xFFFF, 0, false, false);
     this->bauds = bauds;
     sPort->begin(bauds);
     sPort->listen();
@@ -73,21 +72,14 @@ void SerialComms::update() {
     char received;
     if (sPort->available()) {
         received = sPort->read();
+        sPort->write(received);
         if (received == LF) {
-            // Line Feed: maybe we received a whole message
-            // Let's check that by validating message CRC
-            if (validate_message()) {
-                handle_message();
-            } else {
-                sPort->write(NAK);
-            }
-            // Message handled in some way. Discard the message.
+            handle_message();
             message_buffer[0] = '\n';
             message_length = 0;
         } else {
             // Received byte wasn't LF, so let's assume it is part of the message body.
             // We also assume message length to never exceed 64 chars total.
-            // Message validation depends on capping the length to 64!
             if (message_length < 63) {
                 message_buffer[message_length] = received;
                 message_length++;
@@ -105,60 +97,15 @@ void SerialComms::update() {
 
 void SerialComms::send_data(const char *data) {
     char *ptr = data;
-    char crc_str[5];
-    int crc_result = 0x0;
-
-    crc->restart();
 
     for (char c = *ptr; c; c = *++ptr) {
         if (c == '\n') {
             break;
         }
         sPort->write(c);
-        crc->add(c);
     }
 
-    crc_result = crc->getCRC();
-    snprintf(crc_str, 5, "%04X", crc_result);
-    sPort->print(crc_str);
     sPort->write(LF);
-}
-
-bool SerialComms::validate_message() {
-    // A valid message should always consist of at least one data
-    // char and four chars of CRC.
-    if (message_length < 5) {
-        return false;
-    }
-
-    // CRC16 should be the last four ascii chars of the message
-    char crc_str[5];
-    crc_str[0] = message_buffer[message_length - 4];
-    crc_str[1] = message_buffer[message_length - 3];
-    crc_str[2] = message_buffer[message_length - 2];
-    crc_str[3] = message_buffer[message_length - 1];
-    crc_str[4] = '\n';
-
-    // Convert the ascii representation into a proper 16-bit int
-    int crc_value;
-    if (sscanf(crc_str, "%X", &crc_value) != 1) {
-        return false;
-    }
-
-    crc->restart(); // We use the same CRC object for sending as well...
-
-    char payload[13]; // Payload is anything but CRC, assume 12 chars max.
-    for (int i = 0; i < message_length - 4; i++) {
-        payload[i] = message_buffer[i];
-        crc->add(message_buffer[i]);
-    }
-
-    int calculated_crc = crc->getCRC();
-
-    if (calculated_crc == crc_value) {
-        return true;
-    }
-    return false;
 }
 
 void SerialComms::handle_message() {
@@ -172,7 +119,7 @@ void SerialComms::handle_message() {
     attribute[0] = '\n';
     int position = 0;
     int part = 0;
-    for (int i = 0; i < message_length - 4; i++) {
+    for (int i = 0; i < message_length; i++) {
         char chr = message_buffer[i];
         if (chr == ' ') {
             part++;
