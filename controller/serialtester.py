@@ -29,6 +29,7 @@ send_commands = {
     "ACK": b'\x06',
     "BEL": b'\x07',
     "LF": b'\x0A',
+    "CR": b'\x0D',
     "NAK": b'\x15',
 }
 
@@ -50,7 +51,7 @@ def read_byte():
     max_y, _ = stdscr.getmaxyx()
     input_line_position = max_y - 1
     rcvd_byte = ser.read()
-    if rcvd_byte == send_commands["LF"]:
+    if rcvd_byte == send_commands["LF"] or rcvd_byte == send_commands["CR"]:
         text_buffer.append((f"{message_buffer}", 1))
         message_buffer = ""
         cursor_position = 0
