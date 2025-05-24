@@ -5,7 +5,6 @@
 
 #include "src/hmi/alarmled.hpp"
 #include "src/hmi/analogbutton.hpp"
-#include "src/hmi/hd44780.hpp"
 #include "src/logicengine/logicengine.hpp"
 #include "src/maxim18b20/maxim18b20.hpp"
 #include "src/pidcontrol/pidcontrol.hpp"
@@ -19,12 +18,6 @@
 #define SERIAL_TX_PIN 7
 #define FAN_SENSE_PIN 2
 #define FAN_PWM_PIN 3
-#define RS_PIN 12
-#define EN_PIN 13
-#define D4_PIN 8
-#define D5_PIN 9
-#define D6_PIN 10
-#define D7_PIN 11
 #define ALM_LED 5
 #define ANALOGBTN_1_PIN A0
 #define ANALOGBTN_2_PIN A1
@@ -36,7 +29,6 @@
 #define PID_CALC_INTERVAL 1000
 #define FAN_SPEED_INTERVAL 2500
 #define TEMP_READ_INTERVAL 2000
-#define DISPLAY_UPDATE_INTERVAL 100
 #define BUTTON_READ_INTERVAL 10
 
 #define SERIAL_BAUDS 9600
@@ -60,9 +52,6 @@ PWMFan fan1(&events, FAN_SPEED_INTERVAL, FAN_SENSE_PIN, FAN_PWM_PIN);
 DS18B20 ds(DS18B20_PIN);
 Maxim18b20 maxim(&events, &ds, TEMP_READ_INTERVAL, DS18B20_PIN);
 
-HD44780 display(&events, DISPLAY_UPDATE_INTERVAL, RS_PIN, EN_PIN, D4_PIN,
-                D5_PIN, D6_PIN, D7_PIN);
-
 AlarmLED alarmled(&events, ALM_LED);
 
 AnalogButton analogbutton1(&events, BUTTON_READ_INTERVAL, ANALOGBTN_1_PIN,
@@ -77,7 +66,6 @@ void setup() {
     logicengine.setup();
 
     alarmled.setup();
-    display.setup();
 
     maxim.setup();
     fan1.setup();
@@ -110,7 +98,6 @@ void loop() {
     logicengine.loop();
     pidcontroller.loop();
     serialcomms.loop();
-    display.loop();
     analogbutton1.loop();
     analogbutton2.loop();
     analogbutton3.loop();
