@@ -20,8 +20,6 @@ void SerialComms::setup(int bauds) {
 void SerialComms::setup() { setup(9600); }
 
 void SerialComms::notify(const char *event, int payload) {
-    float temporary = 0.0;
-
     if (strncmp(event, "temp", 4) == 0) {
         temp = payload;
     } else if (strncmp(event, "target", 6) == 0) {
@@ -69,29 +67,46 @@ void SerialComms::notify(const char *event, int payload) {
 }
 
 void SerialComms::update() {
-    char received;
-    if (sPort->available()) {
-        received = sPort->read();
-        sPort->write(received);
-        if (received == LF) {
-            handle_message();
-            message_buffer[0] = '\n';
-            message_length = 0;
-        } else {
-            // Received byte wasn't LF, so let's assume it is part of the message body.
-            // We also assume message length to never exceed 64 chars total.
-            if (message_length < 63) {
-                message_buffer[message_length] = received;
-                message_length++;
-                message_buffer[message_length] = '\n';
-            } else {
-                // Input message buffer full. Indicate that by NAKing
-                // every received char until known control char is
-                // received. Not a good solution but at least we don't
-                // ghost the sender completely.
-                sPort->write(NAK);
-            }
+    if (!sPort->available()) {
+        return;
+    }
+
+    char received = sPort->read();
+    if (received == CR) {
+        sPort->write(CR);
+        sPort->write(LF);
+
+        handle_message();
+
+        message_buffer[0] = '\n';
+        message_length = 0;
+    } else if (received == BS || received == DEL) {
+        if (message_length > 0) {
+            message_length--;
+            message_buffer[message_length] = '\n';
+            sPort->write(BS);
+            sPort->write(' ');
+            sPort->write(BS);
         }
+    } else if (received >= ASCII_PRINTABLE_LOWER_LIMIT &&
+               received <= ASCII_PRINTABLE_UPPER_LIMIT) {
+        // Received byte was printable. Limit message length to 63 chars to
+        // accommodate EOL char.
+        if (message_length < 63) {
+            sPort->write(received);
+            message_buffer[message_length] = received;
+            message_length++;
+            message_buffer[message_length] = '\n';
+        } else {
+            // Input message buffer full. Indicate that by NAKing
+            // every received char until known control char is
+            // received. Not a good solution but at least we don't
+            // ghost the sender completely.
+            send_data("Input buffer full!");
+            sPort->write(NAK);
+        }
+    } else {
+        sPort->write(NAK);
     }
 }
 
@@ -105,11 +120,16 @@ void SerialComms::send_data(const char *data) {
         sPort->write(c);
     }
 
+    sPort->write(CR);
     sPort->write(LF);
 }
 
 void SerialComms::handle_message() {
-    char message[12];
+    if (message_buffer[0] == '\n') {
+        return;
+    }
+
+    char message[32];
     int attr_val = -999;
 
     // Payload is anything but CRC, assume 32 chars max.
@@ -127,10 +147,10 @@ void SerialComms::handle_message() {
         } else {
             if (part == 0) {
                 command[position] = chr;
-                command[position+1] = '\n';
+                command[position + 1] = '\n';
             } else {
                 attribute[position] = chr;
-                attribute[position+1] = '\n';
+                attribute[position + 1] = '\n';
             }
             position++;
         }
@@ -140,85 +160,109 @@ void SerialComms::handle_message() {
         attr_val = atoi(attribute);
     }
 
-    if (strncmp(command, "read_temp", 9) == 0) {
+    if (strncmp(command, "temp", 4) == 0) {
         snprintf(message, 12, "%d", temp);
         send_data(message);
-    } else if (strncmp(command, "read_target", 11) == 0) {
-        snprintf(message, 12, "%d", target);
-        send_data(message);
-    } else if (strncmp(command, "read_speed", 10) == 0) {
+    } else if (strncmp(command, "target", 6) == 0) {
+        if (part == 0) {
+            snprintf(message, 12, "%d", target);
+            send_data(message);
+        } else {
+            if (attr_val >= 0 && attr_val <= 1500) {
+                send_data("OK.");
+                events->notify_observers("target", attr_val);
+            } else {
+                send_data("Error. Limit to 0-1500.");
+            }
+        }
+    } else if (strncmp(command, "speed", 5) == 0) {
         snprintf(message, 12, "%d", speed);
         send_data(message);
-    } else if (strncmp(command, "read_pwm", 8) == 0) {
-        snprintf(message, 4, "%d", output);
-        send_data(message);
-    } else if (strncmp(command, "read_kp", 7) == 0) {
-        snprintf(message, 12, "%d", kp);
-        send_data(message);
-    } else if (strncmp(command, "read_ki", 7) == 0) {
-        snprintf(message, 12, "%d", ki);
-        send_data(message);
-    } else if (strncmp(command, "read_kd", 7) == 0) {
-        snprintf(message, 12, "%d", kd);
-        send_data(message);
-    } else if (strncmp(command, "read_mode", 9) == 0) {
-        snprintf(message, 2, "%d", mode);
-        send_data(message);
-    } else if (strncmp(command, "read_alarm", 10) == 0) {
-        snprintf(message, 12, "%d", alarm);
-        send_data(message);
-    } else if (strncmp(command, "write_target", 12) == 0) {
-        if (part > 0 && attr_val >= 0 && attr_val <= 1500) {
-            sPort->write(ACK);
-            events->notify_observers("target", attr_val);
+    } else if (strncmp(command, "pwm", 3) == 0) {
+        if (part == 0) {
+            snprintf(message, 4, "%d", output);
+            send_data(message);
         } else {
-            sPort->write(NAK);
+            if (attr_val >= 0 && attr_val <= 255) {
+                send_data("OK.");
+                events->notify_observers("output", attr_val);
+            } else {
+                send_data("Error. Limit to 0-255.");
+            }
         }
-    } else if (strncmp(command, "write_output", 12) == 0) {
-        if (attr_val >= 0 && attr_val <= 255) {
-            sPort->write(ACK);
-            events->notify_observers("output", attr_val);
+    } else if (strncmp(command, "KP", 2) == 0) {
+        if (part == 0) {
+            snprintf(message, 12, "%d", kp);
+            send_data(message);
         } else {
-            sPort->write(NAK);
+            if (attr_val >= 0 && attr_val <= 1000) {
+                send_data("OK.");
+                events->notify_observers("kp", attr_val);
+            } else {
+                send_data("Error. Limit to 0-1000.");
+            }
         }
-    } else if (strncmp(command, "write_kp", 8) == 0) {
-        if (attr_val >= 0 && attr_val <= 1000) {
-            sPort->write(ACK);
-            events->notify_observers("kp", attr_val);
+    } else if (strncmp(command, "KI", 2) == 0) {
+        if (part == 0) {
+            snprintf(message, 12, "%d", ki);
+            send_data(message);
         } else {
-            sPort->write(NAK);
+            if (attr_val >= 0 && attr_val <= 1000) {
+                send_data("OK.");
+                events->notify_observers("ki", attr_val);
+            } else {
+                send_data("Error. Limit to 0-1000.");
+            }
         }
-    } else if (strncmp(command, "write_ki", 8) == 0) {
-        if (attr_val >= 0 && attr_val <= 1000) {
-            sPort->write(ACK);
-            events->notify_observers("ki", attr_val);
+    } else if (strncmp(command, "KD", 2) == 0) {
+        if (part == 0) {
+            snprintf(message, 12, "%d", kd);
+            send_data(message);
         } else {
-            sPort->write(NAK);
+            if (attr_val >= 0 && attr_val <= 1000) {
+                send_data("OK.");
+                events->notify_observers("kd", attr_val);
+            } else {
+                send_data("Error. Limit to 0-1000.");
+            }
         }
-    } else if (strncmp(command, "write_kd", 8) == 0) {
-        if (attr_val >= 0 && attr_val <= 1000) {
-            sPort->write(ACK);
-            events->notify_observers("kd", attr_val);
+    } else if (strncmp(command, "mode", 4) == 0) {
+        if (part == 0) {
+            snprintf(message, 2, "%d", mode);
+            send_data(message);
         } else {
-            sPort->write(NAK);
-        }
-    } else if (strncmp(command, "write_mode", 10) == 0) {
-        if (attr_val >= 0 && attr_val <= 1) {
-            sPort->write(ACK);
-            events->notify_observers("mode", attr_val);
-        } else {
-            sPort->write(NAK);
+            if (attr_val >= 0 && attr_val <= 1) {
+                send_data("OK.");
+                events->notify_observers("mode", attr_val);
+            } else {
+                send_data("Error. [0: MANUAL; 1: AUTO].");
+            }
         }
     } else if (strncmp(command, "save", 4) == 0) {
-        sPort->write(ACK);
+        send_data("OK");
         events->notify_observers("write_memory", 1);
-    } else if (strncmp(command, "reset", 5) == 0) {
-        sPort->write(ACK);
+    } else if (strncmp(command, "load", 4) == 0) {
+        send_data("OK");
         events->notify_observers("read_memory", 1);
     } else if (strncmp(command, "alerts", 5) == 0) {
-        snprintf(message, 25, "Fan:%d Sensor:%d Temp:%d", alm_fail_fan, alm_fail_sensor, alm_high_temp);
+        snprintf(message, 25, "Fan:%d Sensor:%d Temp:%d", alm_fail_fan,
+                 alm_fail_sensor, alm_high_temp);
         send_data(message);
+    } else if (strncmp(command, "help", 4) == 0) {
+        send_data("Commands:");
+        send_data("temp");
+        send_data("speed");
+        send_data("target [<0-1500>]");
+        send_data("pwm [<0-255>]");
+        send_data("KP [<0-1000>]");
+        send_data("KI [<0-1000>]");
+        send_data("KD [<0-1000>]");
+        send_data("mode [0|1]");
+        send_data("save");
+        send_data("load");
+        send_data("alerts");
+        send_data("help");
     } else {
-        sPort->write(NAK);
+        send_data("Unknown command!");
     }
 }
