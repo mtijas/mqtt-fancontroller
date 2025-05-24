@@ -14,7 +14,7 @@ class PWMFan : public TimedComponent {
     bool fan_fail;
 
   public:
-    PWMFan(Observable *events, int update_interval, int sense_pin, int pwm_pin);
+    PWMFan(IObservable *events, int update_interval, int sense_pin, int pwm_pin);
     void setup();
     void notify(const char *event, int payload);
     void update();

@@ -24,7 +24,7 @@ class HD44780 : public TimedComponent {
     void prepare_print_position(int column, int row, const char *placeholder);
 
   public:
-    HD44780(Observable *events, int update_interval, int rs, int en, int d4,
+    HD44780(IObservable *events, int update_interval, int rs, int en, int d4,
             int d5, int d6, int d7);
     void setup();
     void notify(const char *event, int payload);

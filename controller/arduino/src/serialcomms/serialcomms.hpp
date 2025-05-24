@@ -27,7 +27,7 @@ class SerialComms : public TimedComponent {
     volatile int message_length = 0;
 
   public:
-    SerialComms(Observable *events, int update_interval, const byte rxPin,
+    SerialComms(IObservable *events, int update_interval, const byte rxPin,
                 const byte txPin);
     void setup(int bauds);
     void setup();

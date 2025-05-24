@@ -21,7 +21,7 @@ class PIDControl : public TimedComponent {
     PID *pid;
 
   public:
-    PIDControl(Observable *events, PID *pid, int update_interval, double *input,
+    PIDControl(IObservable *events, PID *pid, int update_interval, double *input,
                double *output, double *setpoint);
     void setup();
     void notify(const char *event, int payload);

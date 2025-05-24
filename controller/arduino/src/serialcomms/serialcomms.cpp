@@ -1,6 +1,6 @@
 #include "serialcomms.hpp"
 
-SerialComms::SerialComms(Observable *events, int update_interval,
+SerialComms::SerialComms(IObservable *events, int update_interval,
                          const byte rxPin, const byte txPin)
     : TimedComponent(events, update_interval) {
     this->sPort = new SoftwareSerial(rxPin, txPin);

@@ -1,6 +1,6 @@
 #include "alarmled.hpp"
 
-AlarmLED::AlarmLED(Observable *events, int led_pin) : Component(events) {
+AlarmLED::AlarmLED(IObservable *events, int led_pin) : Component(events) {
     this->led_pin = led_pin;
 }
 

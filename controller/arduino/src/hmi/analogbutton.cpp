@@ -1,6 +1,6 @@
 #include "analogbutton.hpp"
 
-AnalogButton::AnalogButton(Observable *events, int update_interval, int pin,
+AnalogButton::AnalogButton(IObservable *events, int update_interval, int pin,
                            const char *lower_event, const char *upper_event)
     : TimedComponent(events, update_interval) {
     this->pin = pin;

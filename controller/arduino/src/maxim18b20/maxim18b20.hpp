@@ -13,7 +13,7 @@ class Maxim18b20 : public TimedComponent {
     int pin;
 
   public:
-    Maxim18b20(Observable *events, DS18B20 *sensor, int update_interval,
+    Maxim18b20(IObservable *events, DS18B20 *sensor, int update_interval,
                int port);
     void setup();
     void notify(const char *event, int payload);

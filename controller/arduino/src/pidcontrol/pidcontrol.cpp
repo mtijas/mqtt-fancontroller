@@ -1,6 +1,6 @@
 #include "pidcontrol.hpp"
 
-PIDControl::PIDControl(Observable *events, PID *pid, int update_interval,
+PIDControl::PIDControl(IObservable *events, PID *pid, int update_interval,
                        double *input, double *output, double *setpoint)
     : TimedComponent(events, update_interval) {
     this->pid = pid;

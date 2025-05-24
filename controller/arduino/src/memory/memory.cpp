@@ -1,6 +1,6 @@
 #include "memory.hpp"
 
-Memory::Memory(Observable *events, int update_interval)
+Memory::Memory(IObservable *events, int update_interval)
     : TimedComponent(events, update_interval) {
     return;
 }

@@ -1,6 +1,6 @@
 #include "logicengine.hpp"
 
-LogicEngine::LogicEngine(Observable *events, int update_interval)
+LogicEngine::LogicEngine(IObservable *events, int update_interval)
     : TimedComponent(events, update_interval) {
     return;
 }

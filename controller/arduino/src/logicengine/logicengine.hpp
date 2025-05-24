@@ -11,7 +11,7 @@ class LogicEngine : public TimedComponent {
     int temp_target;
 
   public:
-    LogicEngine(Observable *events, int update_interval);
+    LogicEngine(IObservable *events, int update_interval);
     void setup();
     void notify(const char *event, int payload);
     void update();

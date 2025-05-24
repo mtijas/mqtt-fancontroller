@@ -1,7 +1,7 @@
 #include "timedcomponent.hpp"
 #include <limits.h>
 
-TimedComponent::TimedComponent(Observable *events, int update_interval)
+TimedComponent::TimedComponent(IObservable *events, int update_interval)
     : Component(events) {
     this->update_interval = update_interval;
 }

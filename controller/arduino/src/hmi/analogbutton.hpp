@@ -14,7 +14,7 @@ class AnalogButton : public TimedComponent {
     const char *lower_event, *upper_event;
 
   public:
-    AnalogButton(Observable *events, int update_interval, int pin,
+    AnalogButton(IObservable *events, int update_interval, int pin,
                  const char *lower_event, const char *upper_event);
     void setup();
     void notify(const char *event, int payload);

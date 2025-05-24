@@ -2,6 +2,8 @@
 
 using namespace std;
 
+Observable::Observable() : IObservable() {}
+
 /**
  * @brief Register a new Observer
  *

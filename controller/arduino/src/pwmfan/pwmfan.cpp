@@ -2,7 +2,7 @@
 
 #define PULSES_PER_REVOLUTION 2.0
 
-PWMFan::PWMFan(Observable *events, int update_interval, int sense_pin,
+PWMFan::PWMFan(IObservable *events, int update_interval, int sense_pin,
                int pwm_pin)
     : TimedComponent(events, update_interval) {
     this->sense_pin = sense_pin;

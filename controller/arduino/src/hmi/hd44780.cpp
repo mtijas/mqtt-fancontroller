@@ -1,6 +1,6 @@
 #include "hd44780.hpp"
 
-HD44780::HD44780(Observable *events, int update_interval, int rs, int en,
+HD44780::HD44780(IObservable *events, int update_interval, int rs, int en,
                  int d4, int d5, int d6, int d7)
     : TimedComponent(events, update_interval) {
     this->rs = rs;

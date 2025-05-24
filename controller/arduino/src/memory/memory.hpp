@@ -13,7 +13,7 @@ class Memory : public TimedComponent {
     bool needs_saving = false;
 
   public:
-    Memory(Observable *events, int update_interval);
+    Memory(IObservable *events, int update_interval);
     void setup();
     void notify(const char *event, int payload);
     void update();

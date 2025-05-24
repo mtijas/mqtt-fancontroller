@@ -13,7 +13,7 @@ class TimedComponent : public Component {
     unsigned long calculate_elapsed(unsigned long start, unsigned long stop);
 
   public:
-    TimedComponent(Observable *events, int update_interval);
+    TimedComponent(IObservable *events, int update_interval);
     virtual void update() = 0;
     void loop();
 };

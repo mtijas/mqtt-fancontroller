@@ -14,7 +14,7 @@ class AlarmLED : public Component {
     bool sensor_fail;
 
   public:
-    AlarmLED(Observable *events, int led_pin);
+    AlarmLED(IObservable *events, int led_pin);
     void setup();
     void notify(const char *event, int payload);
     void loop();
