@@ -31,6 +31,8 @@ class SerialComms : public TimedComponent {
     volatile char message_buffer[64];
     volatile int message_length = 0;
 
+    void show_help();
+
   public:
     SerialComms(IObservable *events, int update_interval, const byte rxPin,
                 const byte txPin);

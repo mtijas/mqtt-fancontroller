@@ -11,9 +11,10 @@ void SerialComms::setup(int bauds) {
     this->bauds = bauds;
     sPort->begin(bauds);
     sPort->listen();
-    send_data("MQTT Fan Contr.");
-    send_data("Serial Console");
-    send_data("?");
+    send_data("MQTT Fan Controller");
+    sPort->write(LF);
+    show_help();
+    sPort->write(LF);
     events->register_observer(this);
 }
 
@@ -169,7 +170,7 @@ void SerialComms::handle_message() {
             send_data(message);
         } else {
             if (attr_val >= 0 && attr_val <= 1500) {
-                send_data("OK.");
+                send_data("OK");
                 events->notify_observers("target", attr_val);
             } else {
                 send_data("Error. Limit to 0-1500.");
@@ -184,7 +185,7 @@ void SerialComms::handle_message() {
             send_data(message);
         } else {
             if (attr_val >= 0 && attr_val <= 255) {
-                send_data("OK.");
+                send_data("OK");
                 events->notify_observers("output", attr_val);
             } else {
                 send_data("Error. Limit to 0-255.");
@@ -196,7 +197,7 @@ void SerialComms::handle_message() {
             send_data(message);
         } else {
             if (attr_val >= 0 && attr_val <= 1000) {
-                send_data("OK.");
+                send_data("OK");
                 events->notify_observers("kp", attr_val);
             } else {
                 send_data("Error. Limit to 0-1000.");
@@ -208,7 +209,7 @@ void SerialComms::handle_message() {
             send_data(message);
         } else {
             if (attr_val >= 0 && attr_val <= 1000) {
-                send_data("OK.");
+                send_data("OK");
                 events->notify_observers("ki", attr_val);
             } else {
                 send_data("Error. Limit to 0-1000.");
@@ -220,7 +221,7 @@ void SerialComms::handle_message() {
             send_data(message);
         } else {
             if (attr_val >= 0 && attr_val <= 1000) {
-                send_data("OK.");
+                send_data("OK");
                 events->notify_observers("kd", attr_val);
             } else {
                 send_data("Error. Limit to 0-1000.");
@@ -232,7 +233,7 @@ void SerialComms::handle_message() {
             send_data(message);
         } else {
             if (attr_val >= 0 && attr_val <= 1) {
-                send_data("OK.");
+                send_data("OK");
                 events->notify_observers("mode", attr_val);
             } else {
                 send_data("Error. [0: MANUAL; 1: AUTO].");
@@ -249,20 +250,24 @@ void SerialComms::handle_message() {
                  alm_fail_sensor, alm_high_temp);
         send_data(message);
     } else if (strncmp(command, "help", 4) == 0) {
-        send_data("Commands:");
-        send_data("temp");
-        send_data("speed");
-        send_data("target [<0-1500>]");
-        send_data("pwm [<0-255>]");
-        send_data("KP [<0-1000>]");
-        send_data("KI [<0-1000>]");
-        send_data("KD [<0-1000>]");
-        send_data("mode [0|1]");
-        send_data("save");
-        send_data("load");
-        send_data("alerts");
-        send_data("help");
+        show_help();
     } else {
         send_data("Unknown command!");
     }
+}
+
+void SerialComms::show_help() {
+    send_data("Commands:");
+    send_data("temp");
+    send_data("speed");
+    send_data("target [<0-1500>]");
+    send_data("pwm [<0-255>]");
+    send_data("KP [<0-1000>]");
+    send_data("KI [<0-1000>]");
+    send_data("KD [<0-1000>]");
+    send_data("mode [0|1]");
+    send_data("save");
+    send_data("load");
+    send_data("alerts");
+    send_data("help");
 }
